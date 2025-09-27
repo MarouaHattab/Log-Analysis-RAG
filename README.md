@@ -1,4 +1,4 @@
-#mini-rag 
+# mini-rag 
 
 This is minimal implementation of Retrieval Augmented Generation (RAG)  model for question answering tasks.
 
