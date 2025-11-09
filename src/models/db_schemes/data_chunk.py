@@ -11,3 +11,15 @@ class DataChunk(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True #to allow ObjectId type for pydantic becuase pydantic does not know ObjectId type
+     # we make indexes to optimize queries on chunk_project_id field
+    @classmethod # to make it accessible without instantiating the class
+    def get_indexes(cls):
+        return [
+            {
+                "key":[
+                    ("chunk_project_id", 1)
+                ],
+                "name": "chunk_project_id_index_1",
+                "unique":   False
+            }
+        ]
