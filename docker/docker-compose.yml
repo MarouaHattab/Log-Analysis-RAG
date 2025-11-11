@@ -1,14 +1,38 @@
+# services:
+#   mongodb:
+#     image: mongo:latest
+#     container_name: mongodb
+#     ports:
+#       - "27007:27017"
+#     volumes:
+#       - ./mongodata:/data/db
+#     environment:
+#       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+#       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+#     restart: always
+
+# networks:
+#   backend:
+#     driver: bridge
+# volumes:
+#   mongodata:
+
+
+
+
 services:
   mongodb:
     image: mongo:latest
     container_name: mongodb
     ports:
-      - "27007:27017"
+      # - "27007:27017"
+      - "27017:27017"
     volumes:
       - ./mongodata:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    # Remove authentication for local development
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+    #   - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     restart: always
 
 networks:
