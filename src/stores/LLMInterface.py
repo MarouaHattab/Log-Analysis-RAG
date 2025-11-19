@@ -28,7 +28,7 @@ class LLMInterface(ABC):
 """
         pass
     @abstractmethod
-    def embed_text(self,text:str,document_type:str):
+    def embed_text(self,text:str,document_type:str=None):
         """Generate embeddings for the given text.
 
         Args:
