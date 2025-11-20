@@ -81,7 +81,7 @@ class VectorDBInterface(ABC):
         """
         pass
     @abstractmethod
-    def search_by_vector(self,collection_name:str,vector:list,limit:int):
+    def search_by_vector(self,collection_name:str,vector:list,limit:int=5):
         """Search for similar records in a collection based on a vector.
         Args:
             collection_name (str): The name of the collection.
