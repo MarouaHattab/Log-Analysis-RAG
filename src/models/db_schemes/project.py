@@ -16,11 +16,12 @@ class Project(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @classmethod # to make it accessible without instantiating the class
+    @classmethod
     def get_indexes(cls):
+
         return [
             {
-                "key":[
+                "key": [
                     ("project_id", 1)
                 ],
                 "name": "project_id_index_1",

@@ -8,22 +8,23 @@ class DataChunk(BaseModel):
     chunk_metadata: dict
     chunk_order: int = Field(..., gt=0)
     chunk_project_id: ObjectId
-    chunk_asset_id: ObjectId 
+    chunk_asset_id: ObjectId
 
     class Config:
-        arbitrary_types_allowed = True #to allow ObjectId type for pydantic becuase pydantic does not know ObjectId type
-     # we make indexes to optimize queries on chunk_project_id field
-    @classmethod # to make it accessible without instantiating the class
+        arbitrary_types_allowed = True
+
+    @classmethod
     def get_indexes(cls):
         return [
             {
-                "key":[
+                "key": [
                     ("chunk_project_id", 1)
                 ],
                 "name": "chunk_project_id_index_1",
-                "unique":   False
+                "unique": False
             }
         ]
-    class RetrievedDocument(BaseModel):
-        text: str
-        score: float
+    
+class RetrievedDocument(BaseModel):
+    text: str
+    score: float
