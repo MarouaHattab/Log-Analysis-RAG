@@ -28,11 +28,24 @@ services:
       # - "27007:27017"
       - "27017:27017"
     volumes:
-      - ./mongodata:/data/db
+      - mongodata:/data/db
     # Remove authentication for local development
     # environment:
     #   - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
     #   - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    restart: always
+
+  pgvector:
+    image: ankane/pgvector:latest
+    container_name: pgvector
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - backend
     restart: always
 
 networks:
@@ -40,3 +53,4 @@ networks:
     driver: bridge
 volumes:
   mongodata:
+  pgvector_data:
