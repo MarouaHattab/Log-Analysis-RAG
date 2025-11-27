@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID,JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy import Index
 import uuid
+
 class Asset(SQLAlchemyBase):
     __tablename__ = "assets"
     asset_id=Column(Integer, primary_key=True, autoincrement=True)
@@ -17,7 +18,8 @@ class Asset(SQLAlchemyBase):
 
     asset_project_id=Column(Integer,ForeignKey("projects.project_id"),nullable=False)
 
-    project=relationship("Project",backref="assets")
+    project = relationship("Project", back_populates="assets")
+    chunks = relationship("DataChunk", back_populates="asset")
 
     __table_args__ = (
         # Add any table-level arguments here, such as indexes or constraints
