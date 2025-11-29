@@ -50,6 +50,15 @@ async def index_project(request: Request, project_id: int, push_request: PushReq
     inserted_items_count = 0
     idx = 0
 
+
+    collection_name = nlp_controller.create_collection_name(project_id=project.project_id)
+    _= await request.app.vectordb_client.create_collection(
+        collection_name=collection_name,
+        embedding_size=request.app.embedding_client.embedding_size,
+        do_reset=push_request.do_reset,
+    )
+
+
     while has_records:
         page_chunks = await chunk_model.get_poject_chunks(project_id=project.project_id, page_no=page_no)
         if len(page_chunks):
