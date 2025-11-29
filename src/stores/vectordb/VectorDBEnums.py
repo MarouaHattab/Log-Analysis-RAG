@@ -7,16 +7,19 @@ class VectorDBEnums(Enum):
 class DistanceMethodEnums(Enum):
     COSINE = "cosine"
     DOT = "dot"
-class PgVectorTableSchemaEnums(Enum):
-    ID="id"
-    TEXT="text"
-    VECTOR="vector"
-    CHUNK_ID="chunk_id"
-    METADATA="metadata"
-    _PREFIX="pgvector"
+
+class PgVectorTableSchemeEnums(Enum):
+    ID = 'id'
+    TEXT = 'text'
+    VECTOR = 'vector'
+    CHUNK_ID = 'chunk_id'
+    METADATA = 'metadata'
+    _PREFIX = 'pgvector'
+
 class PgVectorDistanceMethodEnums(Enum):
-    COSINE="vector_cosine_ops"
-    DOT="vector_l2_ops"
+    COSINE = "vector_cosine_ops"
+    DOT = "vector_l2_ops"
+
 class PgVectorIndexTypeEnums(Enum):
-    IVFFLAT="ivfflat"
-    HNSW="hnsw"
+    HNSW = "hnsw"
+    IVFFLAT = "ivfflat"

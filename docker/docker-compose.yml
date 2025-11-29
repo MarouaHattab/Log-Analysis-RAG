@@ -1,49 +1,24 @@
-# services:
-#   mongodb:
-#     image: mongo:latest
-#     container_name: mongodb
-#     ports:
-#       - "27007:27017"
-#     volumes:
-#       - ./mongodata:/data/db
-#     environment:
-#       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-#       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-#     restart: always
-
-# networks:
-#   backend:
-#     driver: bridge
-# volumes:
-#   mongodata:
-
-
-
-
 services:
   mongodb:
     image: mongo:latest
     container_name: mongodb
     ports:
-      # - "27007:27017"
       - "27017:27017"
     volumes:
       - mongodata:/data/db
-    # Remove authentication for local development
-    # environment:
-    #   - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-    #   - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     restart: always
 
   pgvector:
     image: ankane/pgvector:latest
     container_name: pgvector
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgvector_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-admin}
+      - POSTGRES_DB=${POSTGRES_MAIN_DATABASE:-minirag}
     networks:
       - backend
     restart: always
@@ -51,6 +26,7 @@ services:
 networks:
   backend:
     driver: bridge
+
 volumes:
   mongodata:
   pgvector_data:

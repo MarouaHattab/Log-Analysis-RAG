@@ -29,7 +29,7 @@ class ChunkModel(BaseDataModel):
     async def get_chunk(self, chunk_id: str):
 
         async with self.db_client() as session:
-            result = await session.execute(select(DataChunk).where(DataChunk.chunk_id == chunk_id))
+            result = await session.execute(select(DataChunk).where(DataChunk.data_chunk_id == chunk_id))
             chunk = result.scalar_one_or_none()
         return chunk
 
@@ -57,11 +57,12 @@ class ChunkModel(BaseDataModel):
             records = result.scalars().all()
         return records
     
-
     async def get_total_chunks_count(self, project_id: ObjectId):
         total_count = 0
         async with self.db_client() as session:
-            count_sql=select(func.count(DataChunk)).where(DataChunk.chunk_project_id == project_id)
+            count_sql = select(func.count(DataChunk.data_chunk_id)).where(DataChunk.chunk_project_id == project_id)
             records_count = await session.execute(count_sql)
             total_count = records_count.scalar()
+        
         return total_count
+
