@@ -1,32 +1,50 @@
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodata:/data/db
-    restart: always
+#Fast api app
 
-  pgvector:
+#Ngnix server
+
+#Postgres with pgvector
+pgvector:
     image: ankane/pgvector:latest
     container_name: pgvector
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgvector_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${POSTGRES_USERNAME:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-admin}
-      - POSTGRES_DB=${POSTGRES_MAIN_DATABASE:-minirag}
+    env_file:
+      - ./env/.env postgres
     networks:
       - backend
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-networks:
-  backend:
-    driver: bridge
+#qdrant
 
-volumes:
-  mongodata:
-  pgvector_data:
+#prometheus monitoring
+
+
+#grafana dashboard
+
+
+# Node exporter for system metrics
+
+
+#Postgres exporter for Postgres metrics
+postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    ports:
+      - "9187:9187"
+    env_file:
+      - ./env/.env postgres-exporter
+    networks:
+      - backend
+    restart: always
+    depends_on:
+      pgvector:
+        

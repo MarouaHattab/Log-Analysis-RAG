@@ -1,4 +1,2 @@
-mongodb
-mongodata
-mongodata/**
-.env
+env/.env postgres
+env/.env postgres-exporter
