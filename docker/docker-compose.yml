@@ -58,6 +58,20 @@ prometheus:
 
 
 #grafana dashboard
+grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - ./env/.env grafana
+    networks:
+      - backend
+    restart: always
+    depends_on:
+      - prometheus
 
 
 # Node exporter for system metrics
