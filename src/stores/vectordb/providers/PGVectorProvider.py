@@ -32,10 +32,18 @@ class PGVectorProvider(VectorDBInterface):
     async def connect(self):
         async with self.db_client() as session:
             async with session.begin():
-                await session.execute(sql_text(
-                    "CREATE EXTENSION IF NOT EXISTS vector"
-                ))
-                await session.commit()
+                try:
+                    await session.execute(sql_text(
+                        "CREATE EXTENSION IF NOT EXISTS vector"
+                    ))
+                    await session.commit()
+                except Exception as e:
+                    # Handle race condition when multiple workers try to create extension
+                    if "already exists" in str(e) or "duplicate key" in str(e).lower():
+                        self.logger.info("Vector extension already exists, continuing...")
+                        await session.rollback()
+                    else:
+                        raise e
 
     async def disconnect(self):
         pass
