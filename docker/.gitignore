@@ -2,3 +2,5 @@ env/.env.app
 env/.env.grafana
 env/.env.postgres
 env/.env.postgres-exporter
+env/.env.rabbitmq
+env/.env.redis
