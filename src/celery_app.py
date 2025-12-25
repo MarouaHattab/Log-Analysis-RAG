@@ -1,5 +1,5 @@
 from celery import Celery
-from helpers.config import  get_settings
+from helpers.config import get_settings
 
 settings = get_settings()
 
@@ -8,6 +8,7 @@ celery_app = Celery(
     'minirag',
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
+    include=['tasks.mail_service']
 )
 
 # configure celery with essential settings
@@ -28,5 +29,8 @@ celery_app.conf.update(
     broker_connection_retry = True,
     broker_connection_max_retries = 10,
     worker_cancel_long_running_tasks_on_connection_loss = True,
+   task_routes={
+    'tasks.mail_service.send_email_reports': {'queue': 'mail_server_queue'},
+}
 )
 celery_app.conf.task_default_queue = "default"
