@@ -123,12 +123,28 @@
                 <div id="searchResult" class="space-y-3"></div>
             </div>
 
-            <div id="panel-answer" class="hidden space-y-4">
-                <div class="space-y-3">
-                    <textarea id="answerText" placeholder="Ask a question about your documents..." class="w-full bg-slate-50 rounded-xl px-5 py-4 outline-none focus:ring-2 ring-indigo-100 h-32"></textarea>
-                    <button onclick="indexAnswer()" class="w-full btn-gradient text-white font-bold py-3 rounded-xl">Get AI Response</button>
+            <div id="panel-answer" class="hidden flex flex-col h-[500px]">
+                <!-- Chat Messages Area -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-start">
+                        <div class="bg-indigo-100 text-indigo-800 p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-sm">
+                            Hello! I can help answering questions based on your documents. Please upload and process them first!
+                        </div>
+                    </div>
                 </div>
-                <div id="answerResult"></div>
+
+                <!-- Chat Input Area -->
+                <div class="relative bg-white pt-2">
+                    <div class="flex gap-2">
+                        <input type="text" id="answerText" placeholder="Ask a follow-up question..." 
+                               class="flex-1 bg-slate-50 rounded-xl px-5 py-3 outline-none focus:ring-2 ring-indigo-100 transition-all text-sm"
+                               onkeypress="if(event.key === 'Enter') indexAnswer()">
+                        <button onclick="indexAnswer()" id="sendBtn" class="btn-gradient text-white px-6 py-2 rounded-xl flex items-center gap-2">
+                            <span>Send</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -300,29 +316,96 @@ async function indexSearch() {
     } catch(e) { notify('searchResult', 'Connection error', 'error'); }
 }
 
+let currentChatHistory = [];
+
+function formatMarkdown(text) {
+    // Basic Markdown conversion
+    return text
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3 class="font-bold text-lg mt-2 mb-1">$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2 class="font-bold text-xl mt-3 mb-2">$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1 class="font-bold text-2xl mt-4 mb-3">$1</h1>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+        // New lines
+        .replace(/\n/g, '<br>');
+}
+
+function appendChatMessage(text, isUser = false) {
+    const chatArea = document.getElementById('chatMessages');
+    const wrapper = document.createElement('div');
+    wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-[fadeIn_0.2s_ease]`;
+    
+    const bubble = document.createElement('div');
+    bubble.className = isUser 
+        ? 'bg-slate-900 text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm shadow-md'
+        : 'bg-indigo-50 text-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-sm border border-indigo-100 leading-relaxed';
+    
+    if (isUser) {
+        bubble.textContent = text;
+    } else {
+        bubble.innerHTML = formatMarkdown(text);
+    }
+    
+    wrapper.appendChild(bubble);
+    chatArea.appendChild(wrapper);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
 async function indexAnswer() {
     const id = getGlobalId();
     if(!id) return;
-    const text = document.getElementById('answerText').value;
+    
+    const inputEl = document.getElementById('answerText');
+    const text = inputEl.value.trim();
     if(!text) return;
 
-    document.getElementById('answerResult').innerHTML = '<div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl flex items-center gap-2"><div class="animate-spin h-4 w-4 border-2 border-indigo-700 border-t-transparent rounded-full"></div> AI is thinking...</div>';
+    // 1. Show user message
+    inputEl.value = '';
+    appendChatMessage(text, true);
+
+    // 2. Add loading indicator
+    const loadingId = 'loading-' + Date.now();
+    const chatArea = document.getElementById('chatMessages');
+    const loader = document.createElement('div');
+    loader.id = loadingId;
+    loader.className = 'flex justify-start mb-4';
+    loader.innerHTML = `
+        <div class="bg-indigo-50 text-indigo-400 p-3 rounded-2xl rounded-tl-none flex gap-2 items-center">
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+        </div>
+    `;
+    chatArea.appendChild(loader);
+    chatArea.scrollTop = chatArea.scrollHeight;
 
     try {
         const res = await fetch(`${apiBase}/api/v1/nlp/index/answer/${id}`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ text, limit: 3 })
+            method:'POST', 
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ 
+                text, 
+                limit: 6,
+                chat_history: currentChatHistory 
+            })
         });
         const data = await res.json();
+        
+        // Remove loader
+        document.getElementById(loadingId).remove();
+
         if(res.ok && data.answer) {
-            document.getElementById('answerResult').innerHTML = `
-                <div class="p-6 bg-white border-2 border-indigo-100 rounded-2xl shadow-sm">
-                    <div class="text-xs font-bold text-indigo-500 uppercase mb-2 tracking-wider">AI Generated Answer</div>
-                    <div class="prose prose-slate max-w-none text-slate-700 leading-relaxed">${data.answer}</div>
-                </div>
-            `;
-        } else notify('answerResult', 'Failed to get answer', 'error');
-    } catch(e) { notify('answerResult', 'Connection error', 'error'); }
+            appendChatMessage(data.answer, false);
+            // Save the history returned from backend
+            currentChatHistory = data.chat_history;
+        } else {
+            appendChatMessage("Error: " + (data.detail || "Failed to get response"), false);
+        }
+    } catch(e) {
+        document.getElementById(loadingId).remove();
+        appendChatMessage("Network error. Please try again.", false);
+    }
 }
 </script>
 

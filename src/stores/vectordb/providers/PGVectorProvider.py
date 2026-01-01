@@ -79,14 +79,14 @@ class PGVectorProvider(VectorDBInterface):
                     WHERE tablename = :collection_name
                 ''')
 
-                count_sql = sql_text(f'SELECT COUNT(*) FROM {collection_name}')
-
                 table_info = await session.execute(table_info_sql, {"collection_name": collection_name})
-                record_count = await session.execute(count_sql)
-
                 table_data = table_info.fetchone()
+
                 if not table_data:
                     return None
+
+                count_sql = sql_text(f'SELECT COUNT(*) FROM {collection_name}')
+                record_count = await session.execute(count_sql)
                 
                 return {
                     "table_info": {
@@ -159,6 +159,10 @@ class PGVectorProvider(VectorDBInterface):
         if is_index_existed:
             return False
         
+        is_collection_existed = await self.is_collection_existed(collection_name=collection_name)
+        if not is_collection_existed:
+            return False
+
         async with self.db_client() as session:
             async with session.begin():
                 count_sql = sql_text(f'SELECT COUNT(*) FROM {collection_name}')

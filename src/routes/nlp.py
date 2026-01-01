@@ -119,6 +119,7 @@ async def answer_rag(request: Request, project_id: int, search_request: SearchRe
         project=project,
         query=search_request.text,
         limit=search_request.limit,
+        chat_history=search_request.chat_history,
     )
 
     if not answer:

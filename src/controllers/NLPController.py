@@ -91,20 +91,39 @@ class NLPController(BaseController):
 
         return results
     
-    async def answer_rag_question(self, project: Project, query: str, limit: int = 10):
+    async def answer_rag_question(self, project: Project, query: str, limit: int = 10, chat_history: List[dict] = None):
         
-        answer, full_prompt, chat_history = None, None, None
+        answer, full_prompt = None, None
+        search_query = query
+
+        # step0: Refine search query if there is history
+        if chat_history and len(chat_history) > 1:
+            try:
+                # Use a copy to avoid polluting the main history with refinement instructions
+                refinement_history = [h.copy() for h in chat_history]
+                refinement_prompt = f"Given the following conversation history and the latest user message, rephrase the user message to be a standalone search query that can be used to retrieve relevant documents. Only return the search query and nothing else.\n\nLatest message: {query}"
+                
+                refined_query = self.generation_client.generate_text(
+                    prompt=refinement_prompt,
+                    chat_history=refinement_history,
+                    max_output_tokens=100 # Refinement should be short
+                )
+                if refined_query:
+                    search_query = refined_query.strip().strip('"').strip("'")
+                    self.logger.info(f"Refined search query: {search_query}")
+            except Exception as e:
+                self.logger.error(f"Error refining query: {e}")
 
         # step1: retrieve related documents
         try:
             retrieved_documents = await self.search_vector_db_collection(
                 project=project,
-                text=query,
+                text=search_query,
                 limit=limit,
             )
 
             if not retrieved_documents or len(retrieved_documents) == 0:
-                self.logger.error(f"No documents retrieved for query: {query}")
+                self.logger.error(f"No documents retrieved for query: {search_query}")
                 return answer, full_prompt, chat_history
             
             self.logger.info(f"Retrieved {len(retrieved_documents)} documents")
@@ -125,22 +144,34 @@ class NLPController(BaseController):
             })
 
             # step3: Construct Generation Client Prompts
-            chat_history = [
-                self.generation_client.construct_prompt(
-                    prompt=system_prompt,
-                    role=self.generation_client.enums.SYSTEM.value,
-                )
-            ]
+            if not chat_history:
+                chat_history = [
+                    self.generation_client.construct_prompt(
+                        prompt=system_prompt,
+                        role=self.generation_client.enums.SYSTEM.value,
+                    )
+                ]
 
             full_prompt = "\n\n".join([ documents_prompts,  footer_prompt])
 
             # step4: Retrieve the Answer
             answer = self.generation_client.generate_text(
                 prompt=full_prompt,
-                chat_history=chat_history
+                chat_history=chat_history,
+                max_output_tokens=4000 # Increased limit for long answers
             )
             
             self.logger.info(f"Generated answer: {answer[:100] if answer else 'None'}")
+
+            # Update chat history with the new turn
+            chat_history.append(self.generation_client.construct_prompt(
+                prompt=query,
+                role=self.generation_client.enums.USER.value,
+            ))
+            chat_history.append(self.generation_client.construct_prompt(
+                prompt=answer,
+                role=self.generation_client.enums.ASSISTANT.value,
+            ))
 
             return answer, full_prompt, chat_history
         except Exception as e:
