@@ -29,6 +29,9 @@ def push_after_process_task(self, prev_task_result):
     }
 
 
+
+from utils.idempotency_manager import IdempotencyManager
+
 @celery_app.task(
                  bind=True, name="tasks.process_workflow.process_and_push_workflow",
                  autoretry_for=(Exception,),
@@ -36,15 +39,40 @@ def push_after_process_task(self, prev_task_result):
                 )
 def process_and_push_workflow(  self, project_id: int, 
                                 file_id: int, chunk_size: int,
-                                overlap_size: int, do_reset: int):
+                                overlap_size: int, do_reset: int, chunking_method: str = "simple"):
 
     workflow = chain(
-        process_project_files.s(project_id, file_id, chunk_size, overlap_size, do_reset),
+        process_project_files.s(project_id, file_id, chunk_size, overlap_size, do_reset, chunking_method),
         push_after_process_task.s()
     )
 
     result = workflow.apply_async()
 
+    
+    # Manually register the workflow as a task in the database for tracking
+    db_engine, db_client = asyncio.run(get_setup_utils())[0:2]
+    
+    if db_client:
+        idempotency_manager = IdempotencyManager(db_client, db_engine)
+        
+        task_args = {
+            "project_id": project_id,
+            "file_id": file_id,
+            "chunk_size": chunk_size,
+            "overlap_size": overlap_size,
+            "do_reset": do_reset,
+            "chunking_method": chunking_method
+        }
+        
+        # We use run for sync execution of async method
+        asyncio.run(
+            idempotency_manager.create_task_record(
+                task_name="tasks.process_workflow.process_and_push_workflow",
+                task_args=task_args,
+                celery_task_id=result.id
+            )
+        )
+    
     return {
         "signal": "WORKFLOW_STARTED",
         "workflow_id": result.id,

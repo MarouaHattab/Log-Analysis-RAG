@@ -16,7 +16,7 @@ class DataChunk(SQLAlchemyBase):
     chunk_project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
     chunk_asset_id = Column(Integer, ForeignKey("assets.asset_id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    uploaded_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relationships - removed backref to avoid conflict with Project.chunks
     project = relationship("Project", back_populates="chunks")

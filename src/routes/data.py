@@ -15,6 +15,7 @@ from models.enums.AssetTypeEnum import AssetTypeEnum
 from controllers import NLPController
 from tasks.file_processing import process_project_files
 from tasks.process_workflow import process_and_push_workflow
+from celery_app import celery_app
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -22,6 +23,77 @@ data_router = APIRouter(
     prefix="/api/v1/data",
     tags=["api_v1", "data"],
 )
+
+@data_router.get("/chunking-methods")
+async def get_chunking_methods():
+    """
+    Get available chunking methods for log analysis.
+    """
+    process_controller = ProcessController(project_id="temp")
+    methods = process_controller.get_available_chunking_methods()
+    
+    method_descriptions = {
+        "log_time_window": "Groups log entries by time periods (hour-based) - Best for time-series analysis",
+        "log_error_block": "Groups errors and their context together - Best for error pattern analysis",
+        "log_status_code": "Groups by HTTP status code category (2xx, 4xx, 5xx) - Best for status analysis",
+        "log_component_based": "Groups by IP address/component - Best for client behavior analysis"
+    }
+    
+    return JSONResponse(
+        content={
+            "methods": methods,
+            "descriptions": method_descriptions
+        }
+    )
+
+@data_router.get("/task-status/{task_id}")
+async def get_task_status(task_id: str):
+    """
+    Get the status and progress of a processing task.
+    """
+    try:
+        task = celery_app.AsyncResult(task_id)
+        
+        status_response = {
+            "task_id": task_id,
+            "status": task.status,
+            "ready": task.ready(),
+            "successful": task.successful() if task.ready() else None,
+            "failed": task.failed() if task.ready() else None,
+        }
+        
+        # Add progress information if available
+        if task.status == 'PROGRESS':
+            status_response["progress"] = task.info.get('current', 0)
+            status_response["total"] = task.info.get('total', 100)
+            status_response["percentage"] = (task.info.get('current', 0) / task.info.get('total', 100)) * 100
+            status_response["message"] = task.info.get('status', 'Processing...')
+        elif task.status == 'SUCCESS':
+            status_response["result"] = task.result
+            status_response["percentage"] = 100
+            status_response["message"] = "Task completed successfully"
+        elif task.status == 'FAILURE':
+            status_response["error"] = str(task.info)
+            status_response["percentage"] = 0
+            status_response["message"] = "Task failed"
+        elif task.status == 'PENDING':
+            status_response["percentage"] = 0
+            status_response["message"] = "Task pending..."
+        else:  # STARTED, RETRY, etc
+            status_response["percentage"] = 50
+            status_response["message"] = f"Task {task.status.lower()}..."
+        
+        return JSONResponse(content=status_response)
+    
+    except Exception as e:
+        logger.error(f"Error getting task status: {e}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "Could not get task status",
+                "task_id": task_id
+            }
+        )
 
 @data_router.post("/upload/{project_id}")
 async def upload_data(request: Request, project_id: int, file: UploadFile,
@@ -97,6 +169,7 @@ async def process_endpoint(request: Request, project_id: int, process_request: P
     chunk_size = process_request.chunk_size
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
+    chunking_method = process_request.chunking_method
 
     task = process_project_files.delay(
         project_id=project_id,
@@ -104,6 +177,7 @@ async def process_endpoint(request: Request, project_id: int, process_request: P
         chunk_size=chunk_size,
         overlap_size=overlap_size,
         do_reset=do_reset,
+        chunking_method=chunking_method,
     )
 
     return JSONResponse(
@@ -119,6 +193,7 @@ async def process_and_push_endpoint(request: Request, project_id: int, process_r
     chunk_size = process_request.chunk_size
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
+    chunking_method = process_request.chunking_method
 
     workflow_task = process_and_push_workflow.delay(
         project_id=project_id,
@@ -126,6 +201,7 @@ async def process_and_push_endpoint(request: Request, project_id: int, process_r
         chunk_size=chunk_size,
         overlap_size=overlap_size,
         do_reset=do_reset,
+        chunking_method=chunking_method,
     )
 
     return JSONResponse(

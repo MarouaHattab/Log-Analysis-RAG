@@ -34,9 +34,13 @@ class IdempotencyManager:
         session = self.db_client()
         try:
             session.add(task_record)
-            await session.commit()
+            await session.flush()  # Flush to get the ID
+            await session.commit()  # Commit the transaction
             await session.refresh(task_record)
             return task_record
+        except Exception as e:
+            await session.rollback()
+            raise e
         finally:
             await session.close()
 
@@ -51,7 +55,11 @@ class IdempotencyManager:
                     task_record.result = result
                 if status in ['SUCCESS', 'FAILURE']:
                     task_record.completed_at = datetime.utcnow()
+                await session.flush()
                 await session.commit()
+        except Exception as e:
+            await session.rollback()
+            raise e
         finally:
             await session.close()
 

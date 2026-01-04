@@ -21,17 +21,17 @@ logger = logging.getLogger(__name__)
                 )
 def process_project_files(self, project_id: int, 
                           file_id: int, chunk_size: int,
-                          overlap_size: int, do_reset: int):
+                          overlap_size: int, do_reset: int, chunking_method:str):
 
     return asyncio.run(
         _process_project_files(self, project_id, file_id, chunk_size,
-                               overlap_size, do_reset)
+                               overlap_size, do_reset, chunking_method)
     )
 
 
 async def _process_project_files(task_instance, project_id: int, 
                                  file_id: int, chunk_size: int,
-                                 overlap_size: int, do_reset: int):
+                                 overlap_size: int, do_reset: int, chunking_method: str):
 
     
     db_engine, vectordb_client = None, None
@@ -52,7 +52,8 @@ async def _process_project_files(task_instance, project_id: int,
             "file_id": file_id,
             "chunk_size": chunk_size,
             "overlap_size": overlap_size,
-            "do_reset": do_reset
+            "do_reset": do_reset,
+            "chunking_method": chunking_method
         }
         
         task_name = "tasks.file_processing.process_project_files"
@@ -92,7 +93,6 @@ async def _process_project_files(task_instance, project_id: int,
             execution_id=task_record.execution_id,
             status='STARTED'
         )
-
 
         project_model = await ProjectModel.create_instance(
             db_client=db_client
@@ -203,7 +203,8 @@ async def _process_project_files(task_instance, project_id: int,
                 file_content=file_content,
                 file_id=file_id,
                 chunk_size=chunk_size,
-                overlap_size=overlap_size
+                overlap_size=overlap_size,
+                chunking_method=chunking_method
             )
 
             if file_chunks is None or len(file_chunks) == 0:
@@ -222,9 +223,8 @@ async def _process_project_files(task_instance, project_id: int,
                 for i, chunk in enumerate(file_chunks)
             ]
 
-            no_records += await chunk_model.insert_many_chunks(chunks=file_chunks_records)
+            no_records= await chunk_model.insert_many_chunks(chunks=file_chunks_records)
             no_files += 1
-
         task_instance.update_state(
             state="SUCCESS",
             meta={
@@ -238,7 +238,7 @@ async def _process_project_files(task_instance, project_id: int,
             result={"signal": ResponseSignal.PROCESSING_SUCCESS.value}
         )
 
-        logger.warning(f"inserted_chunks: {no_records}")
+
 
         return {
                     "signal": ResponseSignal.PROCESSING_SUCCESS.value,

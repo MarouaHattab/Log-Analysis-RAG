@@ -143,7 +143,7 @@ https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 
 https://grafana.com/grafana/dashboards/23033-qdrant/
 
-https://grafana.com/grafana/dashboards/12485-postgresql-exporter/
+https://grafana.com/grafana/dashboards/24603-qdrant-prometheus-metrics-only-by-divakar-r/
 
 
 ## Development Workflow

@@ -89,6 +89,7 @@ class PGVectorProvider(VectorDBInterface):
                 record_count = await session.execute(count_sql)
                 
                 return {
+                    "collection_name": collection_name,
                     "table_info": {
                         "schemaname": table_data[0],
                         "tablename": table_data[1],

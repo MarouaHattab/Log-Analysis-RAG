@@ -22,7 +22,7 @@ class CeleryTaskExecution(SQLAlchemyBase):
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
     __table_args__ = (
         Index('ixz_task_name_args_celery_hash', task_name, task_args_hash, celery_task_id, unique=True),

@@ -1,417 +1,975 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini-RAG Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-    body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #1e293b; }
-    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
-    .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
-    .btn-gradient { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); transition: all 0.3s ease; }
-    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
-    .loader-dots div { animation-timing-function: cubic-bezier(0, 1, 1, 0); }
-    .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
-    .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
-    .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
-    .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
-    @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-    @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
-    @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
-</style>
-</head>
-<body class="p-4 md:p-12">
-
-<div class="max-w-4xl mx-auto">
-    <header class="text-center mb-12">
-        <h1 class="text-5xl font-bold mb-3 bg-clip-text text-transparent gradient-bg">Mini-RAG Dashboard</h1>
-        <p class="text-slate-500 text-lg">Manage your project files, processing, and RAG queries with style.</p>
-    </header>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <!-- Project Config -->
-        <div class="bg-white p-6 rounded-2xl shadow-xl glass-card col-span-full">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="p-2 gradient-bg rounded-lg text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                </div>
-                <h2 class="text-xl font-bold">Project Configuration</h2>
-            </div>
-            <div class="relative">
-                <input type="text" id="globalId" placeholder="Project ID (e.g., 2002)" class="text-lg w-full border-2 border-slate-100 rounded-xl px-5 py-3 focus:border-indigo-500 outline-none transition-all">
-                <span class="absolute right-4 top-4 text-slate-400 text-sm">Required for all actions</span>
-            </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log Analysis RAG System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #fafafa;
+        color: #1f2937;
+      }
+      .search-result {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .code-font {
+        font-family: "Courier New", monospace;
+      }
+    </style>
+  </head>
+  <body class="p-6 md:p-12">
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <header class="mb-12">
+        <div class="flex items-center gap-3 mb-3">
+          <svg
+            class="w-10 h-10 text-purple-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+          <h1 class="text-4xl font-bold text-gray-900">
+            Log Analysis RAG System
+          </h1>
         </div>
+        <p class="text-gray-600 text-lg">
+          Intelligent log file processing and retrieval-augmented generation
+        </p>
+      </header>
 
-        <!-- Section 1: Upload -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 transition-all hover:shadow-xl">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">1</span>
-                Upload Data
+      <!-- Project Configuration -->
+      <div
+        class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm"
+      >
+        <div class="flex items-center gap-2 mb-4">
+          <svg
+            class="w-5 h-5 text-purple-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            ></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            ></path>
+          </svg>
+          <h2 class="text-lg font-semibold text-gray-900">
+            Project Configuration
+          </h2>
+        </div>
+        <input
+          type="text"
+          id="globalId"
+          placeholder="Enter Project ID (e.g., logs_2024_01)"
+          class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+        />
+        <p class="text-sm text-gray-600 mt-2">
+          Project identifier for log analysis workspace
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Upload Section -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div class="flex items-center gap-2 mb-4">
+            <div
+              class="w-8 h-8 bg-purple-600 text-white rounded flex items-center justify-center text-sm font-bold"
+            >
+              1
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">
+              Upload Log Files
             </h3>
-            <div class="space-y-4">
-                <div class="relative group">
-                    <input type="file" id="uploadFile" class="hidden">
-                    <label for="uploadFile" class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8 cursor-pointer group-hover:border-indigo-400 transition-all">
-                        <svg class="w-10 h-10 text-slate-300 group-hover:text-indigo-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <span id="fileNameDisplay" class="text-slate-500 group-hover:text-indigo-600 font-medium">Click to select file</span>
-                    </label>
-                </div>
-                <button onclick="uploadData()" class="w-full btn-gradient text-white font-bold py-3 px-6 rounded-xl">Start Upload</button>
-                <div id="uploadStatus" class="hidden">
-                    <div class="flex items-center gap-3 p-3 bg-indigo-50 text-indigo-700 rounded-lg">
-                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-700 border-t-transparent"></div>
-                        <span class="font-medium">Uploading your file...</span>
-                    </div>
-                </div>
-                <div id="uploadResult" class="mt-2 text-sm"></div>
+          </div>
+
+          <input type="file" id="uploadFile" class="hidden" />
+          <label
+            for="uploadFile"
+            class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-colors mb-4"
+          >
+            <svg
+              class="w-12 h-12 text-gray-400 mb-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              ></path>
+            </svg>
+            <span id="fileNameDisplay" class="text-sm text-gray-600"
+              >Select log file (.txt, .log, .csv)</span
+            >
+          </label>
+
+          <button
+            onclick="uploadData()"
+            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors"
+          >
+            Upload File
+          </button>
+
+          <div id="uploadStatus" class="hidden mt-4">
+            <div class="flex items-center gap-2 text-sm text-purple-600">
+              <div
+                class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"
+              ></div>
+              <span>Uploading file...</span>
             </div>
+          </div>
+          <div id="uploadResult" class="mt-4"></div>
         </div>
 
-        <!-- Section 2: Process -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 transition-all hover:shadow-xl">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm">2</span>
-                Process & Push
-            </h3>
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div>
-                    <label class="text-xs text-slate-400 uppercase font-bold px-1">Chunk Size</label>
-                    <input type="number" id="chunkSize" value="100" class="w-full border-b-2 border-slate-50 p-2 focus:border-purple-500 outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-400 uppercase font-bold px-1">Overlap</label>
-                    <input type="number" id="overlapSize" value="20" class="w-full border-b-2 border-slate-50 p-2 focus:border-purple-500 outline-none">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-400 uppercase font-bold px-1">Do Reset</label>
-                    <input type="number" id="doRest" value="1" min="0" max="1" class="w-full border-b-2 border-slate-50 p-2 focus:border-purple-500 outline-none" title="1 to clear collection before push, 0 to append">
-                </div>
+        <!-- Process Section -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div class="flex items-center gap-2 mb-4">
+            <div
+              class="w-8 h-8 bg-purple-600 text-white rounded flex items-center justify-center text-sm font-bold"
+            >
+              2
             </div>
-            <button onclick="processAndPush()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 px-6 rounded-xl transition-all">Execute Workflow</button>
-            <div id="processStatus" class="hidden mt-4">
-                <div class="flex items-center gap-3 p-3 bg-purple-50 text-purple-700 rounded-lg">
-                    <div class="animate-pulse w-3 h-3 bg-purple-600 rounded-full"></div>
-                    <span class="font-medium">Triggering processing...</span>
-                </div>
+            <h3 class="text-lg font-semibold text-gray-900">Process & Index</h3>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Log Chunking Strategy</label
+              >
+              <select
+                id="chunkingMethod"
+                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+              >
+                <option value="log_time_window">
+                  Time Window - Group by time periods
+                </option>
+                <option value="log_error_block">
+                  Error Block - Group errors together
+                </option>
+                <option value="log_status_code">
+                  Status Code - Group by HTTP status
+                </option>
+                <option value="log_component_based">
+                  Component Based - Group by IP/source
+                </option>
+                <option value="simpler_splitter">
+                  Simple Splitter - Basic line-based chunking
+                </option>
+              </select>
+              <p id="methodDescription" class="text-xs text-gray-600 mt-2">
+                Select chunking strategy optimized for log analysis
+              </p>
             </div>
-            <div id="processResult" class="mt-2 text-sm"></div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1"
+                  >Chunk Size</label
+                >
+                <input
+                  type="number"
+                  id="chunkSize"
+                  value="100"
+                  class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1"
+                  >Overlap</label
+                >
+                <input
+                  type="number"
+                  id="overlapSize"
+                  value="20"
+                  class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1"
+                  >Reset Index</label
+                >
+                <select
+                  id="doRest"
+                  class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                >
+                  <option value="1">Yes</option>
+                  <option value="0">No</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onclick="processAndPush()"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Start Processing
+            </button>
+
+            <div id="processStatus" class="hidden">
+              <div class="flex items-center gap-2 text-sm text-purple-600">
+                <div
+                  class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"
+                ></div>
+                <span>Processing logs...</span>
+              </div>
+            </div>
+
+            <div id="processResult" class="mt-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Section -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <div class="flex gap-6 border-b border-gray-200 mb-6">
+          <button
+            onclick="switchTab('info')"
+            id="tab-info"
+            class="pb-3 px-1 font-medium border-b-2 border-purple-600 text-purple-600"
+          >
+            Index Info
+          </button>
+          <button
+            onclick="switchTab('search')"
+            id="tab-search"
+            class="pb-3 px-1 font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent"
+          >
+            Search Logs
+          </button>
+          <button
+            onclick="switchTab('answer')"
+            id="tab-answer"
+            class="pb-3 px-1 font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent"
+          >
+            AI Assistant
+          </button>
         </div>
 
-        <!-- Section 3: Info & Search -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg col-span-full">
-            <div class="flex border-b mb-6">
-                <button onclick="switchTab('info')" id="tab-info" class="px-6 py-2 font-bold border-b-2 border-indigo-500 text-indigo-600">Index Info</button>
-                <button onclick="switchTab('search')" id="tab-search" class="px-6 py-2 font-bold text-slate-400">Search</button>
-                <button onclick="switchTab('answer')" id="tab-answer" class="px-6 py-2 font-bold text-slate-400">Ask AI</button>
-            </div>
-
-            <div id="panel-info" class="space-y-4">
-                <button onclick="getIndexInfo()" class="border-2 border-slate-100 px-6 py-2 rounded-lg font-semibold hover:bg-slate-50 transition-all">Get Latest Info</button>
-                <div id="infoResult" class="mt-4 overflow-hidden rounded-xl"></div>
-            </div>
-
-            <div id="panel-search" class="hidden space-y-4">
-                <div class="flex gap-4">
-                    <input type="text" id="searchText" placeholder="Search for something..." class="flex-1 bg-slate-50 rounded-xl px-4 py-2 outline-none focus:ring-2 ring-indigo-100">
-                    <input type="number" id="searchLimit" value="3" class="w-20 bg-slate-50 rounded-xl px-4 py-2 outline-none">
-                    <button onclick="indexSearch()" class="btn-gradient text-white px-8 py-2 rounded-xl">Find</button>
-                </div>
-                <div id="searchResult" class="space-y-3"></div>
-            </div>
-
-            <div id="panel-answer" class="hidden flex flex-col h-[500px]">
-                <!-- Chat Messages Area -->
-                <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div class="flex justify-start">
-                        <div class="bg-indigo-100 text-indigo-800 p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-sm">
-                            Hello! I can help answering questions based on your documents. Please upload and process them first!
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Chat Input Area -->
-                <div class="relative bg-white pt-2">
-                    <div class="flex gap-2">
-                        <input type="text" id="answerText" placeholder="Ask a follow-up question..." 
-                               class="flex-1 bg-slate-50 rounded-xl px-5 py-3 outline-none focus:ring-2 ring-indigo-100 transition-all text-sm"
-                               onkeypress="if(event.key === 'Enter') indexAnswer()">
-                        <button onclick="indexAnswer()" id="sendBtn" class="btn-gradient text-white px-6 py-2 rounded-xl flex items-center gap-2">
-                            <span>Send</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <!-- Index Info Panel -->
+        <div id="panel-info">
+          <button
+            onclick="getIndexInfo()"
+            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors mb-4 flex items-center justify-center gap-2"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+            Refresh Index Information
+          </button>
+          <div id="infoResult"></div>
         </div>
+
+        <!-- Search Panel -->
+        <div id="panel-search" class="hidden">
+          <div class="flex gap-3 mb-4">
+            <input
+              type="text"
+              id="searchText"
+              placeholder="Search logs (e.g., 'error', 'timeout', 'status:500')..."
+              class="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+            />
+            <input
+              type="number"
+              id="searchLimit"
+              value="5"
+              min="1"
+              max="20"
+              class="w-20 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-center text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+            />
+            <button
+              onclick="indexSearch()"
+              class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+            >
+              Search
+            </button>
+          </div>
+          <div id="searchResult" class="space-y-3"></div>
+        </div>
+
+        <!-- Answer Panel -->
+        <div id="panel-answer" class="hidden">
+          <div class="flex flex-col h-[600px]">
+            <!-- Chat Header -->
+            <div
+              class="bg-purple-50 border border-purple-200 rounded-t-lg p-4 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-gray-900 font-semibold">
+                  Log Analysis AI Assistant
+                </h3>
+                <p class="text-xs text-gray-600">
+                  Ask questions about your log data
+                </p>
+              </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div
+              id="chatMessages"
+              class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 border-x border-gray-200"
+            >
+              <div class="flex items-start gap-3">
+                <div
+                  class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0"
+                >
+                  <svg
+                    class="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    ></path>
+                  </svg>
+                </div>
+                <div
+                  class="bg-white border border-gray-200 p-4 rounded-lg max-w-[85%] text-sm text-gray-700"
+                >
+                  <p class="leading-relaxed">
+                    Hello! I'm your log analysis assistant. I can help you:
+                  </p>
+                  <ul class="mt-2 space-y-1 text-gray-600">
+                    <li>• Find specific errors or patterns in your logs</li>
+                    <li>• Analyze error frequencies and trends</li>
+                    <li>• Identify root causes of issues</li>
+                    <li>• Answer questions about log data</li>
+                  </ul>
+                  <p class="mt-3 text-gray-500 text-xs">
+                    Upload and process your logs first, then ask me anything!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="bg-white border border-gray-200 rounded-b-lg p-4">
+              <div class="flex gap-3">
+                <input
+                  type="text"
+                  id="answerText"
+                  placeholder="Ask about your logs... (e.g., 'What are the most common errors?')"
+                  class="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                  onkeypress="if(event.key === 'Enter') indexAnswer()"
+                />
+                <button
+                  onclick="indexAnswer()"
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <span>Send</span>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
 
-<script>
-const apiBase = 'http://127.0.0.1:8000';
+    <script>
+      const apiBase = "http://127.0.0.1:8000";
 
-document.getElementById('uploadFile').addEventListener('change', e => {
-    const name = e.target.files[0]?.name || 'Click to select file';
-    document.getElementById('fileNameDisplay').textContent = name;
-});
+      let chunkingMethodDescriptions = {
+        log_time_window:
+          "Groups log entries by time periods (hour-based) - Best for time-series analysis",
+        log_error_block:
+          "Groups errors and their context together - Best for error pattern analysis",
+        log_status_code:
+          "Groups by HTTP status code category (2xx, 4xx, 5xx) - Best for status analysis",
+        log_component_based:
+          "Groups by IP address/component - Best for client behavior analysis",
+        simpler_splitter:
+          "Basic splitter that groups text by size or line count",
+      };
 
-function switchTab(tab) {
-    const tabs = ['info', 'search', 'answer'];
-    tabs.forEach(t => {
-        document.getElementById(`panel-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).classList.remove('border-indigo-500', 'text-indigo-600');
-        document.getElementById(`tab-${t}`).classList.add('text-slate-400');
-    });
-    document.getElementById(`panel-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-${tab}`).classList.add('border-indigo-500', 'text-indigo-600');
-    document.getElementById(`tab-${tab}`).classList.remove('text-slate-400');
-}
+      document.getElementById("uploadFile").addEventListener("change", (e) => {
+        const name =
+          e.target.files[0]?.name || "Select log file (.txt, .log, .csv)";
+        document.getElementById("fileNameDisplay").textContent = name;
+      });
 
-function getGlobalId() {
-    const id = document.getElementById('globalId').value.trim();
-    if(!id) {
-        shake(document.getElementById('globalId'));
-        return null;
-    }
-    return id;
-}
+      document
+        .getElementById("chunkingMethod")
+        .addEventListener("change", (e) => {
+          const selected = e.target.value;
+          document.getElementById("methodDescription").textContent =
+            chunkingMethodDescriptions[selected] || "Select chunking strategy";
+        });
 
-function shake(el) {
-    el.classList.add('animate-bounce');
-    setTimeout(() => el.classList.remove('animate-bounce'), 500);
-}
+      window.addEventListener("DOMContentLoaded", () => {
+        const method = document.getElementById("chunkingMethod").value;
+        document.getElementById("methodDescription").textContent =
+          chunkingMethodDescriptions[method];
+        loadChunkingMethods();
+      });
 
-function notify(divId, message, type='success') {
-    const colors = {
-        'success': 'bg-green-50 text-green-700 border-green-200',
-        'error': 'bg-red-50 text-red-700 border-red-200',
-        'info': 'bg-blue-50 text-blue-700 border-blue-200'
-    };
-    const icons = {
-        'success': 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-        'error': 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
-        'info': 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-    };
-    
-    document.getElementById(divId).innerHTML = `
-        <div class="flex items-start gap-3 p-4 rounded-xl border ${colors[type]} mb-4 animate-[fadeIn_0.3s_ease]">
-            <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icons[type]}"></path></svg>
-            <p class="text-sm font-medium leading-relaxed">${message}</p>
-        </div>
-    `;
-}
-
-let lastFileId = null;
-
-async function uploadData() {
-    const id = getGlobalId();
-    if(!id) return;
-    const fileInput = document.getElementById('uploadFile');
-    if(!fileInput.files.length) return notify('uploadResult', 'Please select a file first', 'error');
-
-    document.getElementById('uploadStatus').classList.remove('hidden');
-    document.getElementById('uploadResult').innerHTML = '';
-
-    try {
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        const res = await fetch(`${apiBase}/api/v1/data/upload/${id}`, { method:'POST', body: formData });
-        const data = await res.json();
-        
-        if(res.ok) {
-            lastFileId = data.file_id;
-            notify('uploadResult', `Success! File ID: ${data.file_id || 'N/A'}`, 'success');
-        } else {
-            notify('uploadResult', `Upload failed: ${data.detail || data.signal || JSON.stringify(data)}`, 'error');
+      async function loadChunkingMethods() {
+        try {
+          const res = await fetch(`${apiBase}/api/v1/data/chunking-methods`);
+          if (res.ok) {
+            const data = await res.json();
+            chunkingMethodDescriptions = data.descriptions;
+            const current = document.getElementById("chunkingMethod").value;
+            document.getElementById("methodDescription").textContent =
+              chunkingMethodDescriptions[current];
+          }
+        } catch (e) {
+          console.log("Using default chunking method descriptions");
         }
-    } catch(e) {
-        notify('uploadResult', `Error connecting to server. Is the API running?`, 'error');
-    } finally {
-        document.getElementById('uploadStatus').classList.add('hidden');
-    }
-}
+      }
 
-async function processAndPush() {
-    const id = getGlobalId();
-    if(!id) return;
+      function switchTab(tab) {
+        const tabs = ["info", "search", "answer"];
+        tabs.forEach((t) => {
+          document.getElementById(`panel-${t}`).classList.add("hidden");
+          const tabBtn = document.getElementById(`tab-${t}`);
+          tabBtn.classList.remove("border-purple-600", "text-purple-600");
+          tabBtn.classList.add("text-gray-600", "border-transparent");
+        });
+        document.getElementById(`panel-${tab}`).classList.remove("hidden");
+        const activeTab = document.getElementById(`tab-${tab}`);
+        activeTab.classList.add("border-purple-600", "text-purple-600");
+        activeTab.classList.remove("text-gray-500", "border-transparent");
+      }
 
-    document.getElementById('processStatus').classList.remove('hidden');
-    document.getElementById('processResult').innerHTML = '';
+      function getGlobalId() {
+        const id = document.getElementById("globalId").value.trim();
+        if (!id) {
+          document.getElementById("globalId").focus();
+          return null;
+        }
+        return id;
+      }
 
-    try {
-        const payload = {
-            chunk_size: Number(document.getElementById('chunkSize').value),
-            overlap_size: Number(document.getElementById('overlapSize').value),
-            do_reset: Number(document.getElementById('doRest')?.value || 1),
-            file_id: lastFileId
+      function notify(divId, message, type = "success") {
+        const colors = {
+          success: "bg-purple-50 text-purple-700 border-purple-200",
+          error: "bg-red-50 text-red-700 border-red-200",
+          info: "bg-blue-50 text-blue-700 border-blue-200",
         };
-        const res = await fetch(`${apiBase}/api/v1/data/process-and-push/${id}`, {
-            method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        
-        if(res.ok) {
-            notify('processResult', `Workflow started! Task: ${data.workflow_task_id}`, 'success');
-        } else {
-            notify('processResult', `Failed: ${res.statusText} (${res.status}). Verify project ID exists.`, 'error');
-        }
-    } catch(e) {
-        notify('processResult', `Network error. CORS might be blocking the preflight OPTIONS request if the server wasn't restarted.`, 'error');
-    } finally {
-        document.getElementById('processStatus').classList.add('hidden');
-    }
-}
 
-async function getIndexInfo() {
-    const id = getGlobalId();
-    if(!id) return;
-    document.getElementById('infoResult').innerHTML = '<div class="p-4 text-slate-400">Loading info...</div>';
-    
-    try {
-        const res = await fetch(`${apiBase}/api/v1/nlp/index/info/${id}`);
-        const data = await res.json();
-        if(res.ok && data.collection_info) {
-            const table = data.collection_info.table_info;
-            document.getElementById('infoResult').innerHTML = `
-                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><span class="text-xs text-slate-400 uppercase block">Database Table</span><span class="font-mono font-bold">${table.tablename}</span></div>
-                        <div><span class="text-xs text-slate-400 uppercase block">Records Found</span><span class="font-mono font-bold text-indigo-600">${data.collection_info.record_count}</span></div>
-                    </div>
-                </div>
+        document.getElementById(divId).innerHTML = `
+          <div class="border ${colors[type]} rounded-lg p-3 text-sm animate-[fadeIn_0.3s_ease]">
+            ${message}
+          </div>
+        `;
+      }
+
+      let lastFileId = null;
+      let isEmbeddingInProgress = false;
+
+      function setEmbeddingState(inProgress) {
+        isEmbeddingInProgress = inProgress;
+        const chatInput = document.getElementById("answerText");
+        const chatMessages = document.getElementById("chatMessages");
+        const sendButton = chatInput.nextElementSibling;
+        
+        if (inProgress) {
+          // Disable chat input
+          chatInput.disabled = true;
+          chatInput.placeholder = "⏳ Please wait... Embedding in progress. Chat will be available once complete.";
+          chatInput.classList.add("bg-gray-200", "cursor-not-allowed");
+          sendButton.disabled = true;
+          sendButton.classList.add("opacity-50", "cursor-not-allowed");
+          
+          // Add embedding status banner to chat
+          const existingBanner = document.getElementById("embeddingBanner");
+          if (!existingBanner) {
+            const banner = document.createElement("div");
+            banner.id = "embeddingBanner";
+            banner.className = "bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3 animate-pulse";
+            banner.innerHTML = `
+              <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-semibold text-yellow-800">Embedding in Progress</p>
+                <p class="text-sm text-yellow-600">Processing and indexing your log data. Please wait before asking questions...</p>
+              </div>
             `;
+            chatMessages.appendChild(banner);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
         } else {
-            notify('infoResult', data.detail || 'Collection not found or project ID invalid', 'error');
+          // Enable chat input
+          chatInput.disabled = false;
+          chatInput.placeholder = "Ask about your logs... (e.g., 'What are the most common errors?')";
+          chatInput.classList.remove("bg-gray-200", "cursor-not-allowed");
+          sendButton.disabled = false;
+          sendButton.classList.remove("opacity-50", "cursor-not-allowed");
+          
+          // Remove embedding banner (no ready message added)
+          const existingBanner = document.getElementById("embeddingBanner");
+          if (existingBanner) {
+            existingBanner.remove();
+          }
         }
-    } catch(e) { notify('infoResult', 'Could not reach server', 'error'); }
-}
+      }
 
-async function indexSearch() {
-    const id = getGlobalId();
-    if(!id) return;
-    const text = document.getElementById('searchText').value;
-    if(!text) return;
+      async function uploadData() {
+        const id = getGlobalId();
+        if (!id) return;
+        const fileInput = document.getElementById("uploadFile");
+        if (!fileInput.files.length)
+          return notify(
+            "uploadResult",
+            "Please select a log file first",
+            "error"
+          );
 
-    document.getElementById('searchResult').innerHTML = '<div class="animate-pulse flex space-x-4 p-4"><div class="flex-1 space-y-4 py-1"><div class="h-4 bg-slate-200 rounded w-3/4"></div><div class="h-4 bg-slate-200 rounded"></div></div></div>';
+        document.getElementById("uploadStatus").classList.remove("hidden");
+        document.getElementById("uploadResult").innerHTML = "";
 
-    try {
-        const res = await fetch(`${apiBase}/api/v1/nlp/index/search/${id}`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ text, limit: Number(document.getElementById('searchLimit').value) })
-        });
-        const data = await res.json();
-        if(res.ok && data.results) {
-            document.getElementById('searchResult').innerHTML = data.results.map(r => `
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 h-full">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full font-bold">MATCH: ${(r.score * 100).toFixed(1)}%</span>
-                    </div>
-                    <p class="text-sm text-slate-700 leading-relaxed">${r.text}</p>
+        try {
+          const formData = new FormData();
+          formData.append("file", fileInput.files[0]);
+          const res = await fetch(`${apiBase}/api/v1/data/upload/${id}`, {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            lastFileId = data.file_id;
+            notify(
+              "uploadResult",
+              `File uploaded successfully! ID: ${data.file_id || "N/A"}`,
+              "success"
+            );
+          } else {
+            notify(
+              "uploadResult",
+              `Upload failed: ${data.detail || JSON.stringify(data)}`,
+              "error"
+            );
+          }
+        } catch (e) {
+          notify(
+            "uploadResult",
+            "Connection error. Please verify the API is running.",
+            "error"
+          );
+        } finally {
+          document.getElementById("uploadStatus").classList.add("hidden");
+        }
+      }
+
+      async function processAndPush() {
+        const id = getGlobalId();
+        if (!id) return;
+
+        // Disable chat while embedding
+        setEmbeddingState(true);
+
+        document.getElementById("processStatus").classList.remove("hidden");
+        document.getElementById("processResult").innerHTML = "";
+
+        try {
+          const payload = {
+            chunk_size: Number(document.getElementById("chunkSize").value),
+            overlap_size: Number(document.getElementById("overlapSize").value),
+            do_reset: Number(document.getElementById("doRest")?.value || 1),
+            file_id: lastFileId,
+            chunking_method: document.getElementById("chunkingMethod").value,
+          };
+          const res = await fetch(
+            `${apiBase}/api/v1/data/process-and-push/${id}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+          const data = await res.json();
+
+          if (res.ok) {
+            const taskId = data.workflow_task_id;
+            notify(
+              "processResult",
+              `Processing started (Task: ${taskId})`,
+              "success"
+            );
+            monitorTaskProgress(taskId);
+          } else {
+            notify(
+              "processResult",
+              `Processing failed: ${res.statusText}`,
+              "error"
+            );
+            // Re-enable chat on failure
+            setEmbeddingState(false);
+          }
+        } catch (e) {
+          notify(
+            "processResult",
+            "Network error. Verify API connection.",
+            "error"
+          );
+          // Re-enable chat on error
+          setEmbeddingState(false);
+        } finally {
+          document.getElementById("processStatus").classList.add("hidden");
+        }
+      }
+
+      async function monitorTaskProgress(taskId) {
+        const checkInterval = setInterval(async () => {
+          try {
+            const res = await fetch(
+              `${apiBase}/api/v1/data/task-status/${taskId}`
+            );
+            const status = await res.json();
+
+            if (res.ok) {
+              if (status.status === "SUCCESS") {
+                clearInterval(checkInterval);
+                // Enable chat - embedding complete
+                setEmbeddingState(false);
+              } else if (status.status === "FAILURE") {
+                clearInterval(checkInterval);
+                notify(
+                  "processResult",
+                  "Processing failed: " + (status.error || "Unknown error"),
+                  "error"
+                );
+                // Enable chat even on failure so user can try again
+                setEmbeddingState(false);
+              }
+            }
+          } catch (e) {
+            console.error("Error monitoring task:", e);
+          }
+        }, 1000);
+      }
+
+      async function getIndexInfo() {
+        const id = getGlobalId();
+        if (!id) return;
+        document.getElementById("infoResult").innerHTML =
+          '<div class="text-sm text-gray-500">Loading index information...</div>';
+
+        try {
+          const res = await fetch(`${apiBase}/api/v1/nlp/index/info/${id}`);
+          const data = await res.json();
+          if (res.ok && data.collection_info) {
+            const table = data.collection_info.table_info;
+            const recordCount = data.collection_info.record_count || 0;
+
+            document.getElementById("infoResult").innerHTML = `
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div class="text-xs text-gray-600 uppercase tracking-wider mb-2">Database Table</div>
+                    <div class="code-font text-lg font-semibold text-purple-600">${
+                      table.tablename
+                    }</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-600 uppercase tracking-wider mb-2">Indexed Records</div>
+                    <div class="code-font text-lg font-semibold text-purple-600">${recordCount.toLocaleString()}</div>
+                  </div>
                 </div>
-            `).join('');
-        } else notify('searchResult', 'Search failed', 'error');
-    } catch(e) { notify('searchResult', 'Connection error', 'error'); }
-}
-
-let currentChatHistory = [];
-
-function formatMarkdown(text) {
-    // Basic Markdown conversion
-    return text
-        // Headers
-        .replace(/^### (.*$)/gim, '<h3 class="font-bold text-lg mt-2 mb-1">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 class="font-bold text-xl mt-3 mb-2">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 class="font-bold text-2xl mt-4 mb-3">$1</h1>')
-        // Bold
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
-        // New lines
-        .replace(/\n/g, '<br>');
-}
-
-function appendChatMessage(text, isUser = false) {
-    const chatArea = document.getElementById('chatMessages');
-    const wrapper = document.createElement('div');
-    wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-[fadeIn_0.2s_ease]`;
-    
-    const bubble = document.createElement('div');
-    bubble.className = isUser 
-        ? 'bg-slate-900 text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm shadow-md'
-        : 'bg-indigo-50 text-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-sm border border-indigo-100 leading-relaxed';
-    
-    if (isUser) {
-        bubble.textContent = text;
-    } else {
-        bubble.innerHTML = formatMarkdown(text);
-    }
-    
-    wrapper.appendChild(bubble);
-    chatArea.appendChild(wrapper);
-    chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-async function indexAnswer() {
-    const id = getGlobalId();
-    if(!id) return;
-    
-    const inputEl = document.getElementById('answerText');
-    const text = inputEl.value.trim();
-    if(!text) return;
-
-    // 1. Show user message
-    inputEl.value = '';
-    appendChatMessage(text, true);
-
-    // 2. Add loading indicator
-    const loadingId = 'loading-' + Date.now();
-    const chatArea = document.getElementById('chatMessages');
-    const loader = document.createElement('div');
-    loader.id = loadingId;
-    loader.className = 'flex justify-start mb-4';
-    loader.innerHTML = `
-        <div class="bg-indigo-50 text-indigo-400 p-3 rounded-2xl rounded-tl-none flex gap-2 items-center">
-            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-        </div>
-    `;
-    chatArea.appendChild(loader);
-    chatArea.scrollTop = chatArea.scrollHeight;
-
-    try {
-        const res = await fetch(`${apiBase}/api/v1/nlp/index/answer/${id}`, {
-            method:'POST', 
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ 
-                text, 
-                limit: 6,
-                chat_history: currentChatHistory 
-            })
-        });
-        const data = await res.json();
-        
-        // Remove loader
-        document.getElementById(loadingId).remove();
-
-        if(res.ok && data.answer) {
-            appendChatMessage(data.answer, false);
-            // Save the history returned from backend
-            currentChatHistory = data.chat_history;
-        } else {
-            appendChatMessage("Error: " + (data.detail || "Failed to get response"), false);
+              </div>
+            `;
+          } else {
+            notify(
+              "infoResult",
+              data.detail || "Collection not found or invalid project ID",
+              "error"
+            );
+          }
+        } catch (e) {
+          notify(
+            "infoResult",
+            "Connection error. Cannot reach server.",
+            "error"
+          );
         }
-    } catch(e) {
-        document.getElementById(loadingId).remove();
-        appendChatMessage("Network error. Please try again.", false);
-    }
-}
-</script>
+      }
 
-<style>
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-</style>
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
 
-</body>
+      function truncateText(text, maxLength = 300) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + "...";
+      }
+
+      async function indexSearch() {
+        const id = getGlobalId();
+        if (!id) return;
+        const text = document.getElementById("searchText").value;
+        if (!text) return;
+
+        document.getElementById("searchResult").innerHTML =
+          '<div class="text-sm text-gray-600 flex items-center gap-2"><div class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>Searching logs...</div>';
+
+        try {
+          const res = await fetch(`${apiBase}/api/v1/nlp/index/search/${id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text,
+              limit: Number(document.getElementById("searchLimit").value),
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.results) {
+            if (data.results.length === 0) {
+              document.getElementById("searchResult").innerHTML =
+                '<div class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-4">No matching log entries found.</div>';
+            } else {
+              document.getElementById("searchResult").innerHTML = data.results
+                .map(
+                  (r, index) => `
+                  <div class="bg-white border border-gray-200 rounded-lg p-4 hover:border-purple-400 hover:shadow-sm transition-all">
+                    <div class="flex justify-between items-center mb-3">
+                      <span class="text-xs font-semibold text-purple-600 uppercase">Log Entry ${
+                        index + 1
+                      }</span>
+                      <span class="text-xs text-gray-500">Relevance: ${(
+                        r.score * 100
+                      ).toFixed(1)}%</span>
+                    </div>
+                    <div class="bg-gray-50 rounded p-3 border border-gray-200">
+                      <pre class="text-sm text-gray-700 search-result whitespace-pre-wrap code-font">${escapeHtml(
+                        truncateText(r.text)
+                      )}</pre>
+                    </div>
+                  </div>
+                `
+                )
+                .join("");
+            }
+          } else {
+            notify("searchResult", "Search failed. Please try again.", "error");
+          }
+        } catch (e) {
+          notify("searchResult", "Connection error during search.", "error");
+        }
+      }
+
+      let currentChatHistory = [];
+
+      function formatMarkdown(text) {
+        return text
+          .replace(
+            /^### (.*$)/gim,
+            '<h3 class="font-semibold text-base mt-3 mb-2 text-gray-900">$1</h3>'
+          )
+          .replace(
+            /^## (.*$)/gim,
+            '<h2 class="font-semibold text-lg mt-4 mb-2 text-gray-900">$1</h2>'
+          )
+          .replace(
+            /^# (.*$)/gim,
+            '<h1 class="font-semibold text-xl mt-4 mb-3 text-gray-900">$1</h1>'
+          )
+          .replace(
+            /\*\*(.*?)\*\*/g,
+            '<strong class="font-semibold text-gray-900">$1</strong>'
+          )
+          .replace(
+            /`([^`]+)`/g,
+            '<code class="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-sm code-font">$1</code>'
+          )
+          .replace(/\n/g, "<br>");
+      }
+
+      function appendChatMessage(text, isUser = false) {
+        const chatArea = document.getElementById("chatMessages");
+        const wrapper = document.createElement("div");
+        wrapper.className = `flex items-start gap-3 animate-[fadeIn_0.3s_ease] ${
+          isUser ? "justify-end" : ""
+        }`;
+
+        if (!isUser) {
+          const avatar = document.createElement("div");
+          avatar.className =
+            "w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0";
+          avatar.innerHTML = `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
+          wrapper.appendChild(avatar);
+        }
+
+        const bubble = document.createElement("div");
+        bubble.className = isUser
+          ? "bg-purple-600 text-white p-4 rounded-lg max-w-[85%] text-sm"
+          : "bg-white border border-gray-200 p-4 rounded-lg max-w-[85%] text-sm text-gray-700";
+
+        if (isUser) {
+          bubble.textContent = text;
+        } else {
+          bubble.innerHTML = `<div class="leading-relaxed">${formatMarkdown(
+            text
+          )}</div>`;
+        }
+
+        wrapper.appendChild(bubble);
+
+        if (isUser) {
+          const avatar = document.createElement("div");
+          avatar.className =
+            "w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0";
+          avatar.innerHTML = `<svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+          wrapper.appendChild(avatar);
+        }
+
+        chatArea.appendChild(wrapper);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      async function indexAnswer() {
+        const id = getGlobalId();
+        if (!id) return;
+
+        // Prevent chat while embedding is in progress
+        if (isEmbeddingInProgress) {
+          appendChatMessage("⏳ Please wait - embedding is still in progress. You can ask questions once the processing is complete.", false);
+          return;
+        }
+
+        const inputEl = document.getElementById("answerText");
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        inputEl.value = "";
+        appendChatMessage(text, true);
+
+        const loadingId = "loading-" + Date.now();
+        const chatArea = document.getElementById("chatMessages");
+        const loader = document.createElement("div");
+        loader.id = loadingId;
+        loader.className = "flex items-start gap-3";
+        loader.innerHTML = `
+          <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div class="bg-white border border-gray-200 p-4 rounded-lg flex gap-2">
+            <div class="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
+            <div class="w-2 h-2 bg-purple-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+            <div class="w-2 h-2 bg-purple-600 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+          </div>
+        `;
+        chatArea.appendChild(loader);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        try {
+          const res = await fetch(`${apiBase}/api/v1/nlp/index/answer/${id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text,
+              limit: 6,
+              chat_history: currentChatHistory,
+            }),
+          });
+          const data = await res.json();
+
+          document.getElementById(loadingId).remove();
+
+          if (res.ok && data.answer) {
+            appendChatMessage(data.answer, false);
+            currentChatHistory = data.chat_history;
+          } else {
+            appendChatMessage(
+              "I apologize, but I encountered an error processing your request. Please try again or rephrase your question.",
+              false
+            );
+          }
+        } catch (e) {
+          document.getElementById(loadingId).remove();
+          appendChatMessage(
+            "Connection error. Please check your network and try again.",
+            false
+          );
+        }
+      }
+    </script>
+  </body>
 </html>
