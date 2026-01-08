@@ -41,6 +41,9 @@ class ProcessController(BaseController):
         if file_ext == ProcessingEnum.TXT.value:
             return TextLoader(file_path, encoding="utf-8")
 
+        if file_ext == ProcessingEnum.LOG.value:
+            return TextLoader(file_path, encoding="utf-8")
+
         if file_ext == ProcessingEnum.PDF.value:
             return PyMuPDFLoader(file_path)
         
@@ -93,18 +96,18 @@ class ProcessController(BaseController):
                 metadatas=file_content_metadata,
                 chunk_size=chunk_size
             )
-        elif chunking_method == "log_url_pattern":
-            chunks = self.process_log_url_pattern_splitter(
-                texts=file_content_texts,
-                metadatas=file_content_metadata,
-                chunk_size=chunk_size
-            )
-        elif chunking_method == "log_bot_human":
-            chunks = self.process_log_bot_human_splitter(
-                texts=file_content_texts,
-                metadatas=file_content_metadata,
-                chunk_size=chunk_size
-            )
+        # elif chunking_method == "log_url_pattern":
+        #     chunks = self.process_log_url_pattern_splitter(
+        #         texts=file_content_texts,
+        #         metadatas=file_content_metadata,
+        #         chunk_size=chunk_size
+        #     )
+        # elif chunking_method == "log_bot_human":
+        #     chunks = self.process_log_bot_human_splitter(
+        #         texts=file_content_texts,
+        #         metadatas=file_content_metadata,
+        #         chunk_size=chunk_size
+        #     )
         elif chunking_method == "log_semantic_sliding":
             chunks = self.process_log_semantic_sliding_splitter(
                 texts=file_content_texts,
@@ -112,18 +115,18 @@ class ProcessController(BaseController):
                 chunk_size=chunk_size,
                 overlap_size=overlap_size
             )
-        elif chunking_method == "log_http_method":
-            chunks = self.process_log_http_method_splitter(
-                texts=file_content_texts,
-                metadatas=file_content_metadata,
-                chunk_size=chunk_size
-            )
-        elif chunking_method == "simpler_splitter":
-            chunks = self.process_simpler_splitter(
-                texts=file_content_texts,
-                metadatas=file_content_metadata,
-                chunk_size=chunk_size
-            )
+        # elif chunking_method == "log_http_method":
+        #     chunks = self.process_log_http_method_splitter(
+        #         texts=file_content_texts,
+        #         metadatas=file_content_metadata,
+        #         chunk_size=chunk_size
+        #     )
+        # elif chunking_method == "simpler_splitter":
+        #     chunks = self.process_simpler_splitter(
+        #         texts=file_content_texts,
+        #         metadatas=file_content_metadata,
+        #         chunk_size=chunk_size
+        #     )
         else:  # Default to log_time_window (best for general log analysis)
             chunks = self.process_log_time_window_splitter(
                 texts=file_content_texts,
@@ -464,7 +467,7 @@ class ProcessController(BaseController):
             current_component = component
             
             if (idx + 1) % 100 == 0:
-                logger.info(f"✅ [LOG_COMPONENT_BASED] Progress: Processed {idx + 1}/{len(lines)} entries, Created {len(chunks)} chunks")
+                logger.info(f" [LOG_COMPONENT_BASED] Progress: Processed {idx + 1}/{len(lines)} entries, Created {len(chunks)} chunks")
         
         # Don't forget the last chunk
         if current_chunk:

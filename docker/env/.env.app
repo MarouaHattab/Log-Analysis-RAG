@@ -1,7 +1,7 @@
 APP_NAME="mini-RAG"
 APP_VERSION="0.1"
 
-FILE_ALLOWED_TYPES=["text/plain", "application/pdf"]
+FILE_ALLOWED_TYPES=["text/plain","application/pdf","text/x-log","application/octet-stream"]
 FILE_MAX_SIZE=10
 FILE_DEFAULT_CHUNK_SIZE=512000 # 512KB
 

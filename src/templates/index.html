@@ -224,8 +224,8 @@
                 <option value="log_component_based">
                   Component Based - Group by IP/source
                 </option>
-                <option value="simpler_splitter">
-                  Simple Splitter - Basic line-based chunking
+                <option value="log_semantic_sliding">
+                  Semantic Sliding - Context window with overlap
                 </option>
               </select>
               <p id="methodDescription" class="text-xs text-gray-600 mt-2">
@@ -525,8 +525,8 @@
           "Groups by HTTP status code category (2xx, 4xx, 5xx) - Best for status analysis",
         log_component_based:
           "Groups by IP address/component - Best for client behavior analysis",
-        simpler_splitter:
-          "Basic splitter that groups text by size or line count",
+        log_semantic_sliding:
+          "Sliding window with overlap - Best for RAG AI Assistant and context preservation",
       };
 
       // WebSocket connection management
