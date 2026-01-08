@@ -33,6 +33,42 @@
       .code-font {
         font-family: "Courier New", monospace;
       }
+      
+      /* Progress bar animations */
+      .progress-bar {
+        transition: width 0.3s ease-in-out;
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% {
+          box-shadow: 0 0 5px rgba(147, 51, 234, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(147, 51, 234, 0.8);
+        }
+      }
+      
+      .processing-active {
+        animation: pulse-glow 2s infinite;
+      }
+      
+      @keyframes shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+      
+      .shimmer-effect {
+        background: linear-gradient(90deg, 
+          rgba(147, 51, 234, 0.1) 25%, 
+          rgba(147, 51, 234, 0.3) 50%, 
+          rgba(147, 51, 234, 0.1) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
     </style>
   </head>
   <body class="p-6 md:p-12">
@@ -236,10 +272,36 @@
 
             <button
               onclick="processAndPush()"
-              class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors"
+              id="processButton"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Start Processing
             </button>
+
+            <!-- Real-time Progress Display -->
+            <div id="progressContainer" class="hidden">
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <!-- Status Header -->
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div id="progressSpinner" class="animate-spin rounded-full h-5 w-5 border-2 border-purple-600 border-t-transparent"></div>
+                    <span id="progressStatus" class="font-semibold text-purple-900">Processing...</span>
+                  </div>
+                  <span id="progressPercentage" class="text-sm font-bold text-purple-600">0%</span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-purple-200 rounded-full h-3 mb-3 overflow-hidden">
+                  <div id="progressBar" class="progress-bar bg-purple-600 h-3 rounded-full shimmer-effect" style="width: 0%"></div>
+                </div>
+                
+                <!-- Current Step Info -->
+                <div class="flex items-center justify-between text-sm">
+                  <span id="progressMessage" class="text-purple-700">Initializing workflow...</span>
+                  <span id="progressStep" class="text-purple-500">Step 0/2</span>
+                </div>
+              </div>
+            </div>
 
             <div id="processStatus" class="hidden">
               <div class="flex items-center gap-2 text-sm text-purple-600">
@@ -364,6 +426,11 @@
                   Ask questions about your log data
                 </p>
               </div>
+              <!-- Connection Status Indicator -->
+              <div id="wsConnectionStatus" class="ml-auto flex items-center gap-2">
+                <div id="wsStatusDot" class="w-2 h-2 rounded-full bg-gray-400"></div>
+                <span id="wsStatusText" class="text-xs text-gray-500">Disconnected</span>
+              </div>
             </div>
 
             <!-- Chat Messages -->
@@ -420,6 +487,7 @@
                 />
                 <button
                   onclick="indexAnswer()"
+                  id="chatSendButton"
                   class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <span>Send</span>
@@ -446,6 +514,7 @@
 
     <script>
       const apiBase = "http://127.0.0.1:8000";
+      const wsBase = "ws://127.0.0.1:8000";
 
       let chunkingMethodDescriptions = {
         log_time_window:
@@ -459,6 +528,13 @@
         simpler_splitter:
           "Basic splitter that groups text by size or line count",
       };
+
+      // WebSocket connection management
+      let progressWebSocket = null;
+      let currentWorkflowId = null;
+      let isProcessingActive = false;
+      let reconnectAttempts = 0;
+      const MAX_RECONNECT_ATTEMPTS = 5;
 
       document.getElementById("uploadFile").addEventListener("change", (e) => {
         const name =
@@ -536,26 +612,198 @@
       let lastFileId = null;
       let isEmbeddingInProgress = false;
 
+      // ========================================
+      // WebSocket Connection Management
+      // ========================================
+      
+      function updateWebSocketStatus(connected) {
+        const dot = document.getElementById("wsStatusDot");
+        const text = document.getElementById("wsStatusText");
+        
+        if (connected) {
+          dot.classList.remove("bg-gray-400", "bg-red-400");
+          dot.classList.add("bg-green-400");
+          text.textContent = "Connected";
+          text.classList.remove("text-gray-500", "text-red-500");
+          text.classList.add("text-green-600");
+        } else {
+          dot.classList.remove("bg-green-400", "bg-gray-400");
+          dot.classList.add("bg-red-400");
+          text.textContent = "Disconnected";
+          text.classList.remove("text-green-600", "text-gray-500");
+          text.classList.add("text-red-500");
+        }
+      }
+
+      function connectWebSocket(projectId, workflowId = null) {
+        if (progressWebSocket && progressWebSocket.readyState === WebSocket.OPEN) {
+          // If already connected, just subscribe to the new workflow
+          if (workflowId) {
+            progressWebSocket.send(JSON.stringify({
+              action: "subscribe",
+              workflow_id: workflowId
+            }));
+          }
+          return;
+        }
+
+        let wsUrl = `${wsBase}/ws/progress/${projectId}`;
+        if (workflowId) {
+          wsUrl += `?workflow_id=${workflowId}`;
+        }
+
+        progressWebSocket = new WebSocket(wsUrl);
+
+        progressWebSocket.onopen = () => {
+          console.log("WebSocket connected for progress updates");
+          updateWebSocketStatus(true);
+          reconnectAttempts = 0;
+        };
+
+        progressWebSocket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          handleProgressUpdate(data);
+        };
+
+        progressWebSocket.onclose = () => {
+          console.log("WebSocket disconnected");
+          updateWebSocketStatus(false);
+          
+          // Attempt to reconnect if processing is still active
+          if (isProcessingActive && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+            setTimeout(() => {
+              const id = getGlobalId();
+              if (id) {
+                connectWebSocket(id, currentWorkflowId);
+              }
+            }, 2000 * reconnectAttempts);
+          }
+        };
+
+        progressWebSocket.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          updateWebSocketStatus(false);
+        };
+      }
+
+      function disconnectWebSocket() {
+        if (progressWebSocket) {
+          progressWebSocket.close();
+          progressWebSocket = null;
+        }
+      }
+
+      function handleProgressUpdate(data) {
+        if (data.type === "connected" || data.type === "subscribed") {
+          console.log("WebSocket:", data.message);
+          return;
+        }
+
+        if (data.type === "progress_update") {
+          updateProgressUI(data);
+        }
+
+        if (data.type === "error") {
+          console.error("WebSocket error:", data.message);
+        }
+      }
+
+      function updateProgressUI(progress) {
+        const container = document.getElementById("progressContainer");
+        const bar = document.getElementById("progressBar");
+        const percentageText = document.getElementById("progressPercentage");
+        const statusText = document.getElementById("progressStatus");
+        const messageText = document.getElementById("progressMessage");
+        const stepText = document.getElementById("progressStep");
+        const spinner = document.getElementById("progressSpinner");
+
+        // Show progress container
+        container.classList.remove("hidden");
+
+        // Update progress bar
+        const percentage = Math.round(progress.overall_progress || 0);
+        bar.style.width = `${percentage}%`;
+        percentageText.textContent = `${percentage}%`;
+
+        // Update status text based on status
+        const statusMap = {
+          "PENDING": "Initializing...",
+          "CHUNKING": "Chunking Files",
+          "EMBEDDING": "Creating Embeddings",
+          "SUCCESS": "Complete!",
+          "FAILURE": "Failed"
+        };
+        statusText.textContent = statusMap[progress.status] || progress.status;
+
+        // Update message
+        messageText.textContent = progress.message || "Processing...";
+
+        // Update step info
+        stepText.textContent = `Step ${progress.current_step_number || 0}/${progress.total_steps || 2}`;
+
+        // Handle completion
+        if (progress.status === "SUCCESS") {
+          spinner.classList.add("hidden");
+          bar.classList.remove("shimmer-effect");
+          bar.classList.add("bg-green-500");
+          container.querySelector(".bg-purple-50").classList.remove("bg-purple-50", "border-purple-200");
+          container.querySelector("div").classList.add("bg-green-50", "border-green-200");
+          
+          setEmbeddingState(false);
+          isProcessingActive = false;
+          
+          notify("processResult", `
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>Processing complete! Your data is ready for querying.</span>
+            </div>
+          `, "success");
+        } else if (progress.status === "FAILURE") {
+          spinner.classList.add("hidden");
+          bar.classList.remove("shimmer-effect");
+          bar.classList.add("bg-red-500");
+          
+          setEmbeddingState(false);
+          isProcessingActive = false;
+          
+          notify("processResult", `Failed: ${progress.error_message || "Unknown error"}`, "error");
+        }
+      }
+
+      // ========================================
+      // Processing State Management
+      // ========================================
+
       function setEmbeddingState(inProgress) {
         isEmbeddingInProgress = inProgress;
         const chatInput = document.getElementById("answerText");
+        const sendButton = document.getElementById("chatSendButton");
+        const processButton = document.getElementById("processButton");
         const chatMessages = document.getElementById("chatMessages");
-        const sendButton = chatInput.nextElementSibling;
         
         if (inProgress) {
           // Disable chat input
           chatInput.disabled = true;
-          chatInput.placeholder = "⏳ Please wait... Embedding in progress. Chat will be available once complete.";
+          chatInput.placeholder = "Please wait... Processing in progress. Chat will be available once complete.";
           chatInput.classList.add("bg-gray-200", "cursor-not-allowed");
           sendButton.disabled = true;
           sendButton.classList.add("opacity-50", "cursor-not-allowed");
           
-          // Add embedding status banner to chat
-          const existingBanner = document.getElementById("embeddingBanner");
+          // Disable process button
+          processButton.disabled = true;
+          processButton.classList.add("opacity-50", "cursor-not-allowed");
+          processButton.textContent = "Processing...";
+          
+          // Add processing status banner to chat
+          const existingBanner = document.getElementById("processingBanner");
           if (!existingBanner) {
             const banner = document.createElement("div");
-            banner.id = "embeddingBanner";
-            banner.className = "bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3 animate-pulse";
+            banner.id = "processingBanner";
+            banner.className = "bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3";
             banner.innerHTML = `
               <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
@@ -564,8 +812,8 @@
                 </svg>
               </div>
               <div>
-                <p class="font-semibold text-yellow-800">Embedding in Progress</p>
-                <p class="text-sm text-yellow-600">Processing and indexing your log data. Please wait before asking questions...</p>
+                <p class="font-semibold text-yellow-800">Processing in Progress</p>
+                <p class="text-sm text-yellow-600">Your log data is being processed and indexed. Please wait before asking questions...</p>
               </div>
             `;
             chatMessages.appendChild(banner);
@@ -579,13 +827,22 @@
           sendButton.disabled = false;
           sendButton.classList.remove("opacity-50", "cursor-not-allowed");
           
-          // Remove embedding banner (no ready message added)
-          const existingBanner = document.getElementById("embeddingBanner");
+          // Enable process button
+          processButton.disabled = false;
+          processButton.classList.remove("opacity-50", "cursor-not-allowed");
+          processButton.textContent = "Start Processing";
+          
+          // Remove processing banner
+          const existingBanner = document.getElementById("processingBanner");
           if (existingBanner) {
             existingBanner.remove();
           }
         }
       }
+
+      // ========================================
+      // API Functions
+      // ========================================
 
       async function uploadData() {
         const id = getGlobalId();
@@ -639,10 +896,15 @@
         const id = getGlobalId();
         if (!id) return;
 
-        // Disable chat while embedding
+        // Set processing state
         setEmbeddingState(true);
+        isProcessingActive = true;
 
-        document.getElementById("processStatus").classList.remove("hidden");
+        // Reset progress UI
+        resetProgressUI();
+
+        // Show progress container
+        document.getElementById("progressContainer").classList.remove("hidden");
         document.getElementById("processResult").innerHTML = "";
 
         try {
@@ -653,6 +915,7 @@
             file_id: lastFileId,
             chunking_method: document.getElementById("chunkingMethod").value,
           };
+          
           const res = await fetch(
             `${apiBase}/api/v1/data/process-and-push/${id}`,
             {
@@ -664,21 +927,27 @@
           const data = await res.json();
 
           if (res.ok) {
-            const taskId = data.workflow_task_id;
+            currentWorkflowId = data.workflow_task_id;
+            
+            // Connect WebSocket for real-time updates
+            connectWebSocket(id, currentWorkflowId);
+            
+            // Start polling as fallback
+            startProgressPolling(currentWorkflowId);
+            
             notify(
               "processResult",
-              `Processing started (Task: ${taskId})`,
-              "success"
+              `Processing started (Workflow: ${currentWorkflowId.substring(0, 8)}...)`,
+              "info"
             );
-            monitorTaskProgress(taskId);
           } else {
             notify(
               "processResult",
               `Processing failed: ${res.statusText}`,
               "error"
             );
-            // Re-enable chat on failure
             setEmbeddingState(false);
+            isProcessingActive = false;
           }
         } catch (e) {
           notify(
@@ -686,41 +955,61 @@
             "Network error. Verify API connection.",
             "error"
           );
-          // Re-enable chat on error
           setEmbeddingState(false);
-        } finally {
-          document.getElementById("processStatus").classList.add("hidden");
+          isProcessingActive = false;
         }
       }
 
-      async function monitorTaskProgress(taskId) {
-        const checkInterval = setInterval(async () => {
+      function resetProgressUI() {
+        const container = document.getElementById("progressContainer");
+        const bar = document.getElementById("progressBar");
+        const spinner = document.getElementById("progressSpinner");
+        
+        bar.style.width = "0%";
+        bar.classList.remove("bg-green-500", "bg-red-500");
+        bar.classList.add("bg-purple-600", "shimmer-effect");
+        spinner.classList.remove("hidden");
+        
+        document.getElementById("progressPercentage").textContent = "0%";
+        document.getElementById("progressStatus").textContent = "Initializing...";
+        document.getElementById("progressMessage").textContent = "Starting workflow...";
+        document.getElementById("progressStep").textContent = "Step 0/2";
+        
+        // Reset container colors
+        const containerDiv = container.querySelector("div");
+        containerDiv.classList.remove("bg-green-50", "border-green-200");
+        containerDiv.classList.add("bg-purple-50", "border-purple-200");
+      }
+
+      // Fallback polling for progress (in case WebSocket fails)
+      let pollingInterval = null;
+      
+      function startProgressPolling(workflowId) {
+        // Clear any existing polling
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+        }
+        
+        pollingInterval = setInterval(async () => {
           try {
             const res = await fetch(
-              `${apiBase}/api/v1/data/task-status/${taskId}`
+              `${apiBase}/api/v1/data/workflow-progress/${workflowId}`
             );
-            const status = await res.json();
-
+            
             if (res.ok) {
-              if (status.status === "SUCCESS") {
-                clearInterval(checkInterval);
-                // Enable chat - embedding complete
-                setEmbeddingState(false);
-              } else if (status.status === "FAILURE") {
-                clearInterval(checkInterval);
-                notify(
-                  "processResult",
-                  "Processing failed: " + (status.error || "Unknown error"),
-                  "error"
-                );
-                // Enable chat even on failure so user can try again
-                setEmbeddingState(false);
+              const progress = await res.json();
+              updateProgressUI(progress);
+              
+              // Stop polling when complete
+              if (progress.status === "SUCCESS" || progress.status === "FAILURE") {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
               }
             }
           } catch (e) {
-            console.error("Error monitoring task:", e);
+            console.error("Error polling progress:", e);
           }
-        }, 1000);
+        }, 2000); // Poll every 2 seconds
       }
 
       async function getIndexInfo() {
@@ -906,9 +1195,9 @@
         const id = getGlobalId();
         if (!id) return;
 
-        // Prevent chat while embedding is in progress
+        // Prevent chat while processing is in progress
         if (isEmbeddingInProgress) {
-          appendChatMessage("⏳ Please wait - embedding is still in progress. You can ask questions once the processing is complete.", false);
+          appendChatMessage("Please wait - processing is still in progress. You can ask questions once the processing is complete.", false);
           return;
         }
 

@@ -6,6 +6,7 @@ from models.ProjectModel import ProjectModel
 from models.ChunkModel import ChunkModel
 from controllers import NLPController
 from models import ResponseSignal
+from utils.progress_broadcaster import ProgressBroadcaster
 from tqdm.auto import tqdm
 
 import logging
@@ -23,9 +24,11 @@ def index_data_content(self, project_id: int, do_reset: int):
         _index_data_content(self, project_id, do_reset)
     )
 
-async def _index_data_content(task_instance, project_id: int, do_reset: int):
+
+async def _index_data_content(task_instance, project_id: int, do_reset: int, workflow_id: str = None):
 
     db_engine, vectordb_client = None, None
+    broadcaster = None
 
     try:
 
@@ -35,6 +38,10 @@ async def _index_data_content(task_instance, project_id: int, do_reset: int):
         vectordb_client, template_parser) = await get_setup_utils()
 
         logger.warning("Setup utils were loaded!")
+        
+        # Initialize progress broadcaster if workflow_id is provided
+        if workflow_id:
+            broadcaster = ProgressBroadcaster(db_client, db_engine)
 
         project_model = await ProjectModel.create_instance(
             db_client=db_client
@@ -56,6 +63,10 @@ async def _index_data_content(task_instance, project_id: int, do_reset: int):
                     "signal": ResponseSignal.PROJECT_NOT_FOUND_ERROR.value
                 }
             )
+            
+            # Update workflow progress to failure
+            if workflow_id and broadcaster:
+                await broadcaster.fail_workflow(workflow_id, project_id, "Project not found")
 
             raise Exception(f"No project found for project_id: {project_id}")
     
@@ -83,6 +94,10 @@ async def _index_data_content(task_instance, project_id: int, do_reset: int):
         # setup batching
         total_chunks_count = await chunk_model.get_total_chunks_count(project_id=project.project_id)
         pbar = tqdm(total=total_chunks_count, desc="Vector Indexing", position=0)
+        
+        # Update progress - starting embedding
+        if workflow_id and broadcaster:
+            await broadcaster.start_embedding(workflow_id, project_id, total_chunks_count)
 
         while has_records:
             page_chunks = await chunk_model.get_poject_chunks(project_id=project.project_id, page_no=page_no)
@@ -111,11 +126,24 @@ async def _index_data_content(task_instance, project_id: int, do_reset: int):
                         "signal": ResponseSignal.INSERT_INTO_VECTORDB_ERROR.value
                     }
                 )
+                
+                # Update workflow progress to failure
+                if workflow_id and broadcaster:
+                    await broadcaster.fail_workflow(workflow_id, project_id, "Failed to insert into vector database")
 
                 raise Exception(f"can not insert into vectorDB | project_id: {project_id}")
 
             pbar.update(len(page_chunks))
             inserted_items_count += len(page_chunks)
+            
+            # Update embedding progress
+            if workflow_id and broadcaster:
+                await broadcaster.update_embedding(
+                    workflow_id=workflow_id,
+                    project_id=project_id,
+                    chunks_embedded=inserted_items_count,
+                    total_chunks=total_chunks_count
+                )
         
 
         task_instance.update_state(
@@ -125,10 +153,15 @@ async def _index_data_content(task_instance, project_id: int, do_reset: int):
             }
         )
 
-        return {
+        result = {
                 "signal": ResponseSignal.INSERT_INTO_VECTORDB_SUCCESS.value,
                 "inserted_items_count": inserted_items_count
         }
+        
+        # Note: The workflow completion is handled by push_after_process_task
+        # We don't mark it complete here since this function is called by push_after_process_task
+
+        return result
 
     except Exception as e:
         logger.error(f"Task failed: {str(e)}")

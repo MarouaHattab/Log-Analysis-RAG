@@ -10,6 +10,7 @@ from models.enums.AssetTypeEnum import AssetTypeEnum
 from controllers import ProcessController
 from controllers import NLPController
 from utils.idempotency_manager import IdempotencyManager
+from utils.progress_broadcaster import ProgressBroadcaster, get_parent_workflow_id
 
 import logging
 logger = logging.getLogger(__name__)
@@ -21,20 +22,24 @@ logger = logging.getLogger(__name__)
                 )
 def process_project_files(self, project_id: int, 
                           file_id: int, chunk_size: int,
-                          overlap_size: int, do_reset: int, chunking_method:str):
+                          overlap_size: int, do_reset: int, chunking_method:str,
+                          workflow_id: str = None):
 
     return asyncio.run(
         _process_project_files(self, project_id, file_id, chunk_size,
-                               overlap_size, do_reset, chunking_method)
+                               overlap_size, do_reset, chunking_method,
+                               workflow_id=workflow_id)
     )
 
 
 async def _process_project_files(task_instance, project_id: int, 
                                  file_id: int, chunk_size: int,
-                                 overlap_size: int, do_reset: int, chunking_method: str):
+                                 overlap_size: int, do_reset: int, chunking_method: str,
+                                 workflow_id: str = None):
 
     
     db_engine, vectordb_client = None, None
+    broadcaster = None
     
     try:
 
@@ -42,6 +47,13 @@ async def _process_project_files(task_instance, project_id: int,
         vectordb_provider_factory,
         generation_client, embedding_client,
         vectordb_client, template_parser) = await get_setup_utils()
+
+        # Get the parent workflow ID for progress tracking if not provided
+        if not workflow_id:
+            workflow_id = get_parent_workflow_id(task_instance)
+        
+        # Initialize progress broadcaster
+        broadcaster = ProgressBroadcaster(db_client, db_engine)
 
         # Create idempotency manager
         idempotency_manager = IdempotencyManager(db_client, db_engine)
@@ -134,6 +146,10 @@ async def _process_project_files(task_instance, project_id: int,
                     status='FAILURE',
                     result={"signal": ResponseSignal.FILE_ID_ERROR.value}
                 )
+                
+                # Update workflow progress to failure
+                if workflow_id and broadcaster:
+                    await broadcaster.fail_workflow(workflow_id, project_id, "File not found")
 
                 raise Exception(f"No assets for file: {file_id}")
 
@@ -169,6 +185,10 @@ async def _process_project_files(task_instance, project_id: int,
                 status='FAILURE',
                 result={"signal": ResponseSignal.NO_FILES_ERROR.value,}
             )
+            
+            # Update workflow progress to failure
+            if workflow_id and broadcaster:
+                await broadcaster.fail_workflow(workflow_id, project_id, "No files found for project")
 
             raise Exception(f"No files found for project_id: {project.project_id}")
         
@@ -176,6 +196,7 @@ async def _process_project_files(task_instance, project_id: int,
 
         no_records = 0
         no_files = 0
+        total_files = len(project_files_ids)
 
         chunk_model = await ChunkModel.create_instance(
                             db_client=db_client
@@ -190,6 +211,10 @@ async def _process_project_files(task_instance, project_id: int,
             _ = await chunk_model.delete_chunks_by_project_id(
                 project_id=project.project_id
             )
+        
+        # Start chunking phase - update progress
+        if workflow_id and broadcaster:
+            await broadcaster.start_chunking(workflow_id, project_id, total_files)
 
         for asset_id, file_id in project_files_ids.items():
 
@@ -223,8 +248,19 @@ async def _process_project_files(task_instance, project_id: int,
                 for i, chunk in enumerate(file_chunks)
             ]
 
-            no_records= await chunk_model.insert_many_chunks(chunks=file_chunks_records)
+            no_records += await chunk_model.insert_many_chunks(chunks=file_chunks_records)
             no_files += 1
+            
+            # Update chunking progress
+            if workflow_id and broadcaster:
+                await broadcaster.update_chunking(
+                    workflow_id=workflow_id,
+                    project_id=project_id,
+                    files_processed=no_files,
+                    total_files=total_files,
+                    chunks_created=no_records
+                )
+                
         task_instance.update_state(
             state="SUCCESS",
             meta={
@@ -237,6 +273,10 @@ async def _process_project_files(task_instance, project_id: int,
             status='SUCCESS',
             result={"signal": ResponseSignal.PROCESSING_SUCCESS.value}
         )
+        
+        # Mark chunking as complete
+        if workflow_id and broadcaster:
+            await broadcaster.complete_chunking(workflow_id, project_id, no_records)
 
 
 
@@ -245,11 +285,20 @@ async def _process_project_files(task_instance, project_id: int,
                     "inserted_chunks": no_records,
                     "processed_files": no_files,
                     "project_id": project_id,
-                    "do_reset": do_reset
+                    "do_reset": do_reset,
+                    "workflow_id": workflow_id  # Pass workflow_id to next task
                 }
     
     except Exception as e:
         logger.error(f"Task failed: {str(e)}")
+        
+        # Update workflow progress to failure
+        if workflow_id and broadcaster:
+            try:
+                await broadcaster.fail_workflow(workflow_id, project_id, str(e))
+            except Exception as broadcast_error:
+                logger.error(f"Failed to broadcast failure: {broadcast_error}")
+        
         raise
     finally:
         try:

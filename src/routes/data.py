@@ -16,6 +16,7 @@ from controllers import NLPController
 from tasks.file_processing import process_project_files
 from tasks.process_workflow import process_and_push_workflow
 from celery_app import celery_app
+from utils.progress_manager import ProgressManager
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -92,6 +93,66 @@ async def get_task_status(task_id: str):
             content={
                 "error": "Could not get task status",
                 "task_id": task_id
+            }
+        )
+
+
+@data_router.get("/workflow-progress/{workflow_id}")
+async def get_workflow_progress(request: Request, workflow_id: str):
+    """
+    Get detailed workflow progress from the database.
+    This endpoint provides real-time progress information for
+    the chunking and embedding phases.
+    
+    Returns:
+        - workflow_id: The workflow identifier
+        - status: Current status (PENDING, CHUNKING, EMBEDDING, SUCCESS, FAILURE)
+        - current_step: Current processing step (chunking, embedding)
+        - current_step_number: Step number (1 for chunking, 2 for embedding)
+        - total_steps: Total number of steps (2)
+        - step_progress: Progress within current step (0-100)
+        - overall_progress: Overall workflow progress (0-100)
+        - message: Human-readable progress message
+        - result: Result data (on success)
+        - error_message: Error details (on failure)
+    """
+    try:
+        progress_manager = ProgressManager(db_client=request.app.db_client)
+        progress = await progress_manager.get_progress(workflow_id)
+        
+        if not progress:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "Workflow not found",
+                    "workflow_id": workflow_id
+                }
+            )
+        
+        return JSONResponse(content={
+            "workflow_id": progress.workflow_id,
+            "project_id": progress.project_id,
+            "status": progress.status,
+            "current_step": progress.current_step,
+            "current_step_number": progress.current_step_number,
+            "total_steps": progress.total_steps,
+            "step_progress": progress.step_progress,
+            "overall_progress": progress.overall_progress,
+            "message": progress.message,
+            "result": progress.result,
+            "error_message": progress.error_message,
+            "started_at": progress.started_at.isoformat() if progress.started_at else None,
+            "completed_at": progress.completed_at.isoformat() if progress.completed_at else None
+        })
+    
+    except Exception as e:
+        logger.error(f"Error getting workflow progress: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Could not get workflow progress",
+                "workflow_id": workflow_id,
+                "details": str(e)
             }
         )
 
