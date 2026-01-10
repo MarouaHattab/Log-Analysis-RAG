@@ -1,183 +1,363 @@
-# Docker Setup for MiniRAG Application
+# Docker Deployment Guide
 
-This directory contains the Docker setup for the MiniRAG application, including all necessary services for development and monitoring.
+This directory contains all Docker-related configuration for the mini-RAG application, including **Ollama integration** for self-hosted LLM inference.
 
-## Services
+## 🚀 Quick Start
 
-- **FastAPI Application**: Main application running on Uvicorn
-- **Nginx**: Web server for serving the FastAPI application
-- **PostgreSQL (pgvector)**: Vector-enabled database for storing embeddings
-- **Postgres-Exporter**: Exports PostgreSQL metrics for Prometheus
-- **Qdrant**: Vector database for similarity search
-- **Prometheus**: Metrics collection
-- **Grafana**: Visualization dashboard for metrics
-- **Node-Exporter**: System metrics collection
+### Option 1: Automated Deployment (Recommended)
 
-## Setup Instructions
-
-### 1. Set up environment files
-
-Create your environment files from the examples:
+Use the interactive deployment script from the project root:
 
 ```bash
-# Create all required .env files from examples
-cd docker/env
-cp .env.example.app .env.app
-cp .env.example.postgres .env.postgres
-cp .env.example.grafana .env.grafana
-cp .env.example.postgres-exporter .env.postgres-exporter
-
-# Setup the Alembic configuration for the FastAPI application
 cd ..
-cd docker/minirag
-cp alembic.example.ini alembic.ini
-
-### 2. Start the services
-
-```bash
-cd docker
-docker compose up --build -d
+bash deploy.sh
 ```
 
-To start only specific services:
+Select option 1 for local Docker Compose deployment. The script will:
+- Set up all environment files
+- Start all services
+- Initialize Ollama with required models
+- Display service URLs
+
+### Option 2: Manual Deployment
 
 ```bash
-docker compose up -d fastapi nginx pgvector qdrant
+# 1. Set up environment files
+cd env
+for file in .env.example.*; do cp "$file" "${file//.example/}"; done
+cd ..
+
+# 2. Start all services
+docker compose up -d --build
+
+# 3. Initialize Ollama models
+bash init-ollama.sh
 ```
 
-If you encounter connection issues, you may want to start the database services first and let them initialize before starting the application:
+## 📦 Services Overview
+
+The docker-compose.yml orchestrates the following services:
+
+### Core Application
+- **fastapi** (port 8000) - Main API server
+- **celery-worker** - Background task processor
+- **celery-beat** - Task scheduler
+- **flower** (port 5555) - Celery monitoring dashboard
+- **nginx** (port 80) - Reverse proxy
+
+### AI/LLM Services
+- **ollama** (port 11434) - Self-hosted LLM inference
+  - Models: `qwen2.5-coder:1.5b`, `nomic-embed-text:latest`
+  - Volume: `ollama_data` (persists downloaded models)
+  - GPU support available (see configuration below)
+
+### Databases
+- **pgvector** (port 5400) - PostgreSQL with vector extension
+- **qdrant** (ports 6333, 6334) - Vector database
+- **redis** (port 6379) - Cache and Celery backend
+- **rabbitmq** (ports 5672, 15672) - Message broker
+
+### Monitoring
+- **prometheus** (port 9090) - Metrics collection
+- **grafana** (port 3000) - Metrics visualization
+- **node-exporter** (port 9100) - System metrics
+- **postgres-exporter** (port 9187) - Database metrics
+
+## 🤖 Ollama Configuration
+
+### Model Initialization
+
+The `init-ollama.sh` script automatically pulls required models:
 
 ```bash
-# Start databases first
-docker compose up -d pgvector qdrant postgres-exporter
-# Wait for databases to be healthy
-sleep 30
-# Start the application services
-docker compose up fastapi nginx prometheus grafana node-exporter --build -d
+bash init-ollama.sh
 ```
 
-In case deleting all containers and volumes is necessary, you can run:
+This downloads:
+- **nomic-embed-text:latest** (~274MB) - Text embeddings
+- **qwen2.5-coder:1.5b** (~1.0GB) - Code generation
+
+### GPU Support
+
+To enable NVIDIA GPU acceleration, uncomment these lines in `docker-compose.yml`:
+
+```yaml
+ollama:
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+```
+
+**Prerequisites:**
+- NVIDIA GPU with CUDA support
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed
+
+### Manual Model Management
 
 ```bash
-docker compose down -v --remove-orphans
+# List installed models
+docker exec ollama ollama list
+
+# Pull a specific model
+docker exec ollama ollama pull qwen2.5-coder:1.5b
+
+# Remove a model
+docker exec ollama ollama rm qwen2.5-coder:7b
+
+# Test model inference
+docker exec ollama ollama run qwen2.5-coder:1.5b "Hello, world!"
 ```
 
-### 3. Access the services
+### Switching Models
 
-- FastAPI Application: http://localhost:8000
-- FastAPI Documentation: http://localhost:8000/docs
-- Nginx (serving FastAPI): http://localhost
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
-- Qdrant UI: http://localhost:6333/dashboard
+To use different models, update these files:
 
-## Volume Management
+**docker/env/.env.app:**
+```env
+GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
+EMBEDDING_MODEL_ID="nomic-embed-text:latest"
+```
 
-### Managing Docker Volumes
+**src/.env** (for local development):
+```env
+GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
+EMBEDDING_MODEL_ID="nomic-embed-text:latest"
+```
 
-Docker volumes are used to persist data generated by and used by Docker containers. Here are some commands to manage your volumes:
+Then pull the new models:
+```bash
+docker exec ollama ollama pull <model-name>
+```
 
-1. **List all volumes**:
+## 🔧 Environment Configuration
+
+### Required Environment Files
+
+Located in `env/` directory:
+
+- **.env.app** - Application configuration (LLM, database, Celery)
+- **.env.postgres** - PostgreSQL credentials
+- **.env.rabbitmq** - RabbitMQ configuration
+- **.env.redis** - Redis password
+- **.env.grafana** - Grafana admin credentials
+- **.env.postgres-exporter** - Database metrics exporter
+
+### Key Configuration Variables
+
+**LLM Configuration (.env.app):**
+```env
+GENERATION_BACKEND="OPENAI"
+EMBEDDING_BACKEND="OPENAI"
+OPENAI_API_URL="http://ollama:11434/v1/"
+OPENAI_API_KEY="not-needed"
+
+GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
+EMBEDDING_MODEL_ID="nomic-embed-text:latest"
+EMBEDDING_MODEL_SIZE=768
+```
+
+**Database Configuration:**
+```env
+POSTGRES_HOST="pgvector"
+POSTGRES_PORT=5432
+POSTGRES_USERNAME="postgres"
+POSTGRES_PASSWORD="admin"
+```
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐
+│   Nginx     │ ← Reverse Proxy
+└──────┬──────┘
+       │
+┌──────▼──────┐     ┌──────────────┐
+│   FastAPI   │────▶│   Ollama     │ ← LLM Inference
+└──────┬──────┘     │ - qwen2.5    │
+       │            │ - nomic-embed│
+       │            └──────────────┘
+       │
+┌──────▼──────┐     ┌──────────────┐
+│  RabbitMQ   │────▶│Celery Worker │
+└─────────────┘     └──────┬───────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
+┌──────▼──────┐   ┌────────▼────────┐  ┌──────▼──────┐
+│  PostgreSQL │   │     Qdrant      │  │    Redis    │
+│  (pgvector) │   │  (Vector DB)    │  │   (Cache)   │
+└─────────────┘   └─────────────────┘  └─────────────┘
+```
+
+## 📊 Service URLs
+
+After deployment, access services at:
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| FastAPI API | http://localhost:8000 | - |
+| API Documentation | http://localhost:8000/docs | - |
+| Nginx | http://localhost:80 | - |
+| Flower (Celery) | http://localhost:5555 | Set in .env.app |
+| Grafana | http://localhost:3000 | admin/admin |
+| Prometheus | http://localhost:9090 | - |
+| RabbitMQ | http://localhost:15672 | Set in .env.rabbitmq |
+| Qdrant | http://localhost:6333 | - |
+| Ollama API | http://localhost:11434 | - |
+
+## 🛠️ Common Operations
+
+### View Logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f fastapi
+docker compose logs -f ollama
+docker compose logs -f celery-worker
+```
+
+### Restart Services
+
+```bash
+# All services
+docker compose restart
+
+# Specific service
+docker compose restart fastapi
+docker compose restart ollama
+```
+
+### Stop Services
+
+```bash
+docker compose down
+```
+
+### Clean Everything (including volumes)
+
+```bash
+docker compose down -v
+```
+
+### Database Migrations
+
+```bash
+# Run migrations
+docker exec fastapi alembic -c /app/models/db_schemes/minirag/alembic.ini upgrade head
+
+# Create new migration
+docker exec fastapi alembic -c /app/models/db_schemes/minirag/alembic.ini revision --autogenerate -m "description"
+```
+
+## 🐛 Troubleshooting
+
+### Ollama Service Not Starting
+
+**Check logs:**
+```bash
+docker compose logs ollama
+```
+
+**Verify health:**
+```bash
+curl http://localhost:11434/api/tags
+```
+
+**Restart service:**
+```bash
+docker compose restart ollama
+```
+
+### Models Not Loading
+
+**Check available disk space:**
+```bash
+docker system df
+```
+
+**Manually pull models:**
+```bash
+docker exec ollama ollama pull nomic-embed-text:latest
+docker exec ollama ollama pull qwen2.5-coder:1.5b
+```
+
+### FastAPI Can't Connect to Ollama
+
+**Verify network connectivity:**
+```bash
+docker exec fastapi curl http://ollama:11434/api/tags
+```
+
+**Check environment variables:**
+```bash
+docker exec fastapi env | grep OPENAI_API_URL
+```
+
+### Out of Memory Errors
+
+**Reduce model size** - Use smaller models:
+- `qwen2.5-coder:0.5b` instead of `1.5b`
+- `all-minilm:latest` instead of `nomic-embed-text`
+
+**Increase Docker memory limit** in Docker Desktop settings
+
+### Database Connection Issues
+
+**Check PostgreSQL health:**
+```bash
+docker compose ps pgvector
+docker compose logs pgvector
+```
+
+**Verify connection from FastAPI:**
+```bash
+docker exec fastapi pg_isready -h pgvector -p 5432 -U postgres
+```
+
+## 🔒 Production Considerations
+
+### Security
+
+1. **Change default passwords** in all .env files
+2. **Enable HTTPS** with proper SSL certificates in Nginx
+3. **Restrict network access** using Docker networks
+4. **Use secrets management** for sensitive data
+
+### Performance
+
+1. **Enable GPU** for Ollama if available
+2. **Scale Celery workers** based on workload:
    ```bash
-   docker volume ls
+   docker compose up -d --scale celery-worker=3
    ```
-2. **Inspect a volume**:
-   ```bash
-   docker volume inspect <volume_name>
-   ```
+3. **Tune PostgreSQL** connection pool settings
+4. **Configure Redis** persistence and eviction policies
 
-   - list files in a volume:
-   ```bash
-   docker run --rm -v <volume_name>:/data busybox ls -l /data
-   ```
+### Monitoring
 
-3. **Remove a volume**:
-   ```bash
-   docker volume rm <volume_name>
-   ```
-4. **Prune unused volumes**:
-   ```bash
-    docker volume prune
-    ```
+1. **Set up Grafana dashboards** for all services
+2. **Configure Prometheus alerts** for critical metrics
+3. **Enable log aggregation** (e.g., ELK stack)
+4. **Monitor Ollama** model performance and response times
 
-5. **Backup volume for migration**:
-   ```bash
-    docker run --rm -v <volume_name>:/volume -v $(pwd):/backup alpine tar cvf /backup/backup.tar /volume
-    ```
+## 📚 Additional Resources
 
-6. **Restore volume from backup**:
-   ```bash
-    docker run --rm -v <volume_name>:/volume -v $(pwd):/backup alpine sh -c "cd /volume && tar xvf /backup/backup.tar --strip 1"
-    ```
+- [Ollama Documentation](https://github.com/ollama/ollama)
+- [Docker Compose Reference](https://docs.docker.com/compose/)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Celery Documentation](https://docs.celeryq.dev/)
+- [pgvector Documentation](https://github.com/pgvector/pgvector)
 
-7. **Remove all volumes**:
-    ```bash
-    docker volume rm $(docker volume ls -q)
-    ```
+## 🆘 Support
 
-**NOTE**: For PostgreSQL specifically, you might want to consider using PostgreSQL's built-in tools like `pg_dump` and `pg_restore` for more reliable backups, especially for live databases.
-
-## Monitoring
-
-### FastAPI Metrics
-
-FastAPI is configured to expose Prometheus metrics at the `/metrics` endpoint. These metrics include:
-
-- Request counts
-- Request latencies
-- Status codes
-
-Prometheus is configured to scrape these metrics automatically.
-
-### Visualizing Metrics in Grafana
-
-1. Log into Grafana at http://localhost:3000 (default credentials: admin/admin_password)
-2. Add Prometheus as a data source (URL: http://prometheus:9090)
-3. Import dashboards for FastAPI, PostgreSQL, and Qdrant
-
-#### Dashboards URLs
-
-https://grafana.com/grafana/dashboards/18739-fastapi-observability/
-
-https://grafana.com/grafana/dashboards/1860-node-exporter-full/
-
-https://grafana.com/grafana/dashboards/23033-qdrant/
-
-https://grafana.com/grafana/dashboards/24603-qdrant-prometheus-metrics-only-by-divakar-r/
-
-
-## Development Workflow
-
-The FastAPI application is configured with hot-reloading. Any changes to the code in the `src/` directory will automatically reload the application.
-
-## Troubleshooting
-
-### Connection Errors
-
-If you see connection errors when starting the services:
-
-1. **Database Connection Refused**: This often happens when the FastAPI app tries to connect to databases before they're ready.
-   ```
-   Connection refused: [Errno 111] Connection refused
-   ```
-   
-   Solutions:
-   - Start database services first, wait, then start the application
-   - Check database logs: `docker compose logs pgvector`
-   - Ensure your database credentials in `.env.app` match those in `.env.postgres`
-
-2. **Restart the FastAPI service** after databases are running:
-   ```bash
-   docker compose restart fastapi
-   ```
-
-3. **Check service status**:
-   ```bash
-   docker compose ps
-   ```
-
-4. **View logs** for more details:
-   ```bash
-   docker compose logs --tail=100 fastapi
-   docker compose logs --tail=100 pgvector
-   ```
+For issues or questions:
+1. Check the [main README](../README.md)
+2. Review service logs: `docker compose logs -f`
+3. Open an issue on GitHub

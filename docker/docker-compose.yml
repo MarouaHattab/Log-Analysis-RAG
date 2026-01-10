@@ -15,6 +15,8 @@ services:
     depends_on:
       pgvector:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
     env_file:
       - ./env/.env.app
 
@@ -35,6 +37,8 @@ services:
       redis:
         condition: service_healthy
       pgvector:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     env_file:
       - ./env/.env.app
@@ -235,6 +239,32 @@ services:
       retries: 5
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-minirag_redis_2222}"]
 
+  # Ollama (Local LLM Service)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - backend
+    restart: always
+    # Uncomment the following lines if you have NVIDIA GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 networks:
   backend:
     driver: bridge
@@ -248,3 +278,4 @@ volumes:
   rabbitmq_data:
   redis_data:
   celery_beat_data:
+  ollama_data:

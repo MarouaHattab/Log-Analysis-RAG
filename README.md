@@ -54,7 +54,7 @@ Everything begins when the user submits log files (application logs, server logs
 
 ### Architecture & Workflow Diagrams
 
-- **End‑to‑end workflow**  
+- **End-to-end workflow**  
   ![System Workflow](img/Diagram-Flow.png)
 
 - **FastAPI + Nginx + Monitoring**  

@@ -1,8 +1,9 @@
 from fastapi import FastAPI, APIRouter, Depends, UploadFile, status, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 import os
 from helpers.config import get_settings, Settings
-from controllers import DataController, ProjectController, ProcessController
+from controllers import DataController, ProjectController, ProcessController, EDAController
 import aiofiles
 from models import ResponseSignal
 import logging
@@ -34,10 +35,12 @@ async def get_chunking_methods():
     methods = process_controller.get_available_chunking_methods()
     
     method_descriptions = {
-        "log_time_window": "Groups log entries by time periods (hour-based) - Best for time-series analysis",
-        "log_error_block": "Groups errors and their context together - Best for error pattern analysis",
-        "log_status_code": "Groups by HTTP status code category (2xx, 4xx, 5xx) - Best for status analysis",
-        "log_component_based": "Groups by IP address/component - Best for client behavior analysis"
+        "log_hybrid_adaptive": "1. log_hybrid_adaptive",
+        "log_semantic_sliding": "2. log_semantic_sliding BASELINE COMPARISON",
+        "log_time_window": "3. log_time_window TEMPORAL SPECIALIST",
+        "log_error_block": "4. log_error_block ERROR SPECIALIST",
+        "log_hybrid_intelligent": "5. log_hybrid_intelligent ADVANCED CONTEXT",
+        "log_component_based": "6. log_component_based USER BEHAVIOR SPECIALIST"
     }
     
     return JSONResponse(
@@ -271,3 +274,28 @@ async def process_and_push_endpoint(request: Request, project_id: int, process_r
             "workflow_task_id": workflow_task.id
         }
     )
+
+@data_router.get("/eda/{project_id}/{file_id}")
+async def get_eda_stats(project_id: str, file_id: str):
+    """
+    Get Exploratory Data Analysis statistics for a specific log file.
+    """
+    try:
+        logger.info(f"Starting EDA for project {project_id}, file {file_id}")
+        eda_controller = EDAController(project_id=project_id, file_id=file_id)
+        stats = await run_in_threadpool(eda_controller.analyze_log)
+        
+        if "error" in stats:
+            logger.error(f"EDA failed: {stats['error']}")
+            return JSONResponse(
+                status_code=400,
+                content=stats
+            )
+            
+        return JSONResponse(content=stats)
+    except Exception as e:
+        logger.error(f"Error in EDA endpoint: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )

@@ -1,8 +1,3 @@
-"""
-WebSocket route for real-time workflow progress updates.
-Provides WebSocket endpoints for clients to receive live progress updates.
-"""
-
 import logging
 from typing import Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Request

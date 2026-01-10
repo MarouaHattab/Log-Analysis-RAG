@@ -1,11 +1,3 @@
-"""
-Progress Broadcasting Utilities.
-Helper functions for Celery tasks to broadcast progress updates.
-Since Celery workers run in separate processes, they can't directly access
-the WebSocket connection manager. Instead, they update the database and
-optionally use Redis pub/sub for immediate notifications.
-"""
-
 import json
 import logging
 from typing import Optional, Dict, Any

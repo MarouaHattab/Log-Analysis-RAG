@@ -1,9 +1,3 @@
-"""
-Progress Manager for tracking and broadcasting workflow progress.
-This module provides utilities to update workflow progress in the database
-and notify connected WebSocket clients in real-time.
-"""
-
 import logging
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
@@ -15,6 +9,8 @@ from models.db_schemes.minirag.schemes.workflow_progress import WorkflowProgress
 logger = logging.getLogger(__name__)
 
 
+from models import ProgressStatusEnum
+
 class ProgressManager:
     """
     Manages workflow progress tracking and updates.
@@ -22,16 +18,16 @@ class ProgressManager:
     """
 
     # Step definitions
-    STEP_CHUNKING = "chunking"
-    STEP_EMBEDDING = "embedding"
+    STEP_CHUNKING = ProgressStatusEnum.STEP_CHUNKING.value
+    STEP_EMBEDDING = ProgressStatusEnum.STEP_EMBEDDING.value
     
     # Status definitions
-    STATUS_PENDING = "PENDING"
-    STATUS_STARTED = "STARTED"
-    STATUS_CHUNKING = "CHUNKING"
-    STATUS_EMBEDDING = "EMBEDDING"
-    STATUS_SUCCESS = "SUCCESS"
-    STATUS_FAILURE = "FAILURE"
+    STATUS_PENDING = ProgressStatusEnum.STATUS_PENDING.value
+    STATUS_STARTED = ProgressStatusEnum.STATUS_STARTED.value
+    STATUS_CHUNKING = ProgressStatusEnum.STATUS_CHUNKING.value
+    STATUS_EMBEDDING = ProgressStatusEnum.STATUS_EMBEDDING.value
+    STATUS_SUCCESS = ProgressStatusEnum.STATUS_SUCCESS.value
+    STATUS_FAILURE = ProgressStatusEnum.STATUS_FAILURE.value
 
     def __init__(self, db_client, db_engine=None):
         self.db_client = db_client
