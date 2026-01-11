@@ -11,7 +11,7 @@ if ! docker exec ollama ollama list > /dev/null 2>&1; then
 fi
 
 # Models to install
-GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:7b}"
+GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:1.5b}"
 EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text:latest}"
 
 echo ""

@@ -39,7 +39,7 @@ Everything begins when the user submits log files (application logs, server logs
 5. **Semantic Retrieval & Question Answering**
 
    - When the user submits a query—such as “Why did the service crash?” or “Show similar errors to this stack trace”—the system performs a semantic similarity search against the vector database to retrieve the most relevant log chunks.
-   - The retrieved log context is then passed to Ollama’s `qwen2.5-coder:7b` language model.
+   - The retrieved log context is then passed to Ollama’s `qwen2.5-coder:1.5b` language model.
    - The LLM analyzes the logs, correlates events, and generates clear, context‑aware explanations, potential root causes, or troubleshooting suggestions.
 
 6. **Answer Delivery**
@@ -101,7 +101,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
 
 - **Ollama**
   - **`nomic-embed-text:latest`** – text embeddings generation
-  - **`qwen2.5-coder:7b`** – large language model for answer generation
+  - **`qwen2.5-coder:1.5b`** – large language model for answer generation
 
 ### Vector & Databases
 
@@ -142,7 +142,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Celery Beat**: Handles scheduled and periodic tasks such as cleanup jobs or recurring background processes.
 - **Vector Databases (Qdrant / pgvector)**: Store and index embeddings generated from log chunks, enabling fast and accurate similarity search during retrieval.
 - **Ollama – `nomic-embed-text:latest`**: Generates dense vector embeddings from text chunks, forming the foundation of semantic search.
-- **Ollama – `qwen2.5-coder:7b`**: Generates context‑aware responses based on the most relevant retrieved chunks.
+- **Ollama – `qwen2.5-coder:1.5b`**: Generates context‑aware responses based on the most relevant retrieved chunks.
 - **PostgreSQL**: Stores structured application data including metadata, project information, and task execution details.
 - **SQLAlchemy & Alembic**: Provide ORM capabilities and database schema migrations to manage PostgreSQL efficiently.
 - **Nginx**: Acts as a reverse proxy in front of the FastAPI application, improving security, routing, and performance.
@@ -294,7 +294,7 @@ OPENAI_API_URL="http://host.docker.internal:11434/v1"
 OPENAI_API_KEY="ollama"  # Placeholder value
 
 # Model Selection
-GENERATION_MODEL_ID="qwen2.5-coder:7b"
+GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
 EMBEDDING_MODEL_ID="nomic-embed-text"
 ```
 

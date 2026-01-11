@@ -39,7 +39,7 @@ OPENAI_API_URL=http://ollama:11434/v1
 OPENAI_API_KEY=ollama
 
 # Model Selection
-GENERATION_MODEL_ID=qwen2.5-coder:7b
+GENERATION_MODEL_ID=qwen2.5-coder:1.5b
 EMBEDDING_MODEL_ID=nomic-embed-text:latest
 EMBEDDING_MODEL_SIZE=768
 

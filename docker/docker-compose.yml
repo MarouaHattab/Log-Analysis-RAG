@@ -325,7 +325,7 @@ services:
       ollama:
         condition: service_healthy
     environment:
-      - GENERATION_MODEL=${GENERATION_MODEL:-qwen2.5-coder:7b}
+      - GENERATION_MODEL=${GENERATION_MODEL:-qwen2.5-coder:1.5b}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text:latest}
       - OLLAMA_HOST=http://ollama:11434
     volumes:

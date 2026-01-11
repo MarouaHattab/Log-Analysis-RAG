@@ -11,7 +11,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Default models (can be overridden via environment variables)
-GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:7b}"
+GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:1.5b}"
 EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text:latest}"
 
 # Wait for Ollama service to be ready

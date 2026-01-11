@@ -19,8 +19,8 @@ OPENAI_API_KEY="key___"
 OPENAI_API_URL= ""
 COHERE_API_KEY="key___"
 
-GENERATION_MODEL_ID_LITERAL = ["gpt-4o-mini", "qwen2.5-coder:7b"]
-GENERATION_MODEL_ID="gpt-4o-mini"
+GENERATION_MODEL_ID_LITERAL = ["gpt-4o-mini", "qwen2.5-coder:1.5b"]
+GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
 EMBEDDING_MODEL_ID="nomic-embed-text"
 EMBEDDING_MODEL_SIZE=384
 

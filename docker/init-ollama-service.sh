@@ -7,7 +7,7 @@ set -e
 echo "🚀 Initializing Ollama Models (Service Mode)..."
 
 # Default models (can be overridden via environment variables)
-GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:7b}"
+GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:1.5b}"
 EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text:latest}"
 
 # Set OLLAMA_HOST to point to the ollama service
