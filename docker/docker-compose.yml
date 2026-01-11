@@ -42,7 +42,17 @@ services:
         condition: service_healthy
     env_file:
       - ./env/.env.app
-    command: ["python", "-m", "celery", "-A", "celery_app", "worker", "--queues=default,file_processing,data_indexing", "--loglevel=info"]
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "-A",
+        "celery_app",
+        "worker",
+        "--queues=default,file_processing,data_indexing",
+        "--loglevel=info",
+      ]
 
   # Celery Beat Scheduler
   celery-beat:
@@ -63,7 +73,8 @@ services:
         condition: service_healthy
     env_file:
       - ./env/.env.app
-    command: ["python", "-m", "celery", "-A", "celery_app", "beat", "--loglevel=info"]
+    command:
+      ["python", "-m", "celery", "-A", "celery_app", "beat", "--loglevel=info"]
 
   # Flower Dashboard
   flower:
@@ -81,7 +92,16 @@ services:
       - celery-worker
     env_file:
       - ./env/.env.app
-    command: ["python", "-m", "celery", "-A", "celery_app", "flower", "--conf=flowerconfig.py"]
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "-A",
+        "celery_app",
+        "flower",
+        "--conf=flowerconfig.py",
+      ]
 
   # Nginx Service
   nginx:
@@ -97,7 +117,6 @@ services:
       - backend
     restart: always
 
-
   # PostgreSQL (pgvector)
   pgvector:
     image: pgvector/pgvector:0.8.0-pg17
@@ -105,7 +124,7 @@ services:
     ports:
       - "5400:5432"
     volumes:
-      - 'pgvector:/var/lib/postgresql/data'
+      - "pgvector:/var/lib/postgresql/data"
     env_file:
       - ./env/.env.postgres
     networks:
@@ -144,11 +163,11 @@ services:
       - backend
     restart: always
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
 
   # Grafana Dashboard
   grafana:
@@ -166,7 +185,6 @@ services:
       - backend
     restart: always
 
-
   # Node Exporter for system metrics
   node-exporter:
     image: prom/node-exporter:v1.9.1
@@ -178,10 +196,10 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - backend
     restart: always
@@ -205,7 +223,7 @@ services:
     image: rabbitmq:4.1.2-management-alpine
     container_name: rabbitmq
     ports:
-      - "5672:5672"   # AMQP port
+      - "5672:5672" # AMQP port
       - "15672:15672" # Management UI port
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
@@ -237,9 +255,16 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       timeout: 10s
       retries: 5
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-minirag_redis_2222}"]
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:-minirag_redis_2222}",
+      ]
 
-  # Ollama (Local LLM Service)
+  # Ollama (Local LLM Service) - VPS Optimized
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -250,7 +275,28 @@ services:
     networks:
       - backend
     restart: always
-    # Uncomment the following lines if you have NVIDIA GPU support
+    environment:
+      # VPS Optimization: Set host to 0.0.0.0 to allow external access
+      - OLLAMA_HOST=0.0.0.0:11434
+      # VPS Optimization: Set number of threads (adjust based on your VPS CPU cores)
+      - OLLAMA_NUM_THREADS=${OLLAMA_NUM_THREADS:-4}
+      # VPS Optimization: Keep models in memory for faster inference
+      - OLLAMA_KEEP_ALIVE=5m
+      # VPS Optimization: Set max queue size to prevent memory issues
+      - OLLAMA_MAX_LOADED_MODELS=2
+      # VPS Optimization: Enable verbose logging for debugging
+      - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
+    # VPS Resource Limits - Adjust based on your VPS specifications
+    # Recommended minimum: 4GB RAM, 2 CPU cores
+    deploy:
+      resources:
+        limits:
+          cpus: "${OLLAMA_CPU_LIMIT:-2.0}"
+          memory: ${OLLAMA_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: "${OLLAMA_CPU_RESERVATION:-1.0}"
+          memory: ${OLLAMA_MEMORY_RESERVATION:-2G}
+    # Uncomment the following lines if you have NVIDIA GPU support on VPS
     # deploy:
     #   resources:
     #     reservations:
@@ -263,7 +309,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s # Increased for VPS to allow model loading
 
 networks:
   backend:
