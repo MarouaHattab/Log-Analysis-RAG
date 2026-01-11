@@ -1,137 +1,95 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
-#################################
-# Ollama Model Initialization Script (VPS Optimized)
-# This script pulls the required models inside the Ollama Docker container
-# NO LOCAL OLLAMA INSTALLATION REQUIRED
-# Optimized for VPS deployment with better error handling and retries
-#################################
+echo "🚀 Initializing Ollama Models..."
+echo "=================================="
 
-echo "=========================================="
-echo "Ollama Model Initialization (Docker - VPS)"
-echo "=========================================="
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# Check if Ollama container is running
-echo "Checking if Ollama container is running..."
-if ! docker ps --format '{{.Names}}' | grep -q '^ollama$'; then
-    echo "❌ ERROR: Ollama container is not running!"
-    echo "Please start the services first with:"
-    echo "  docker compose up -d ollama"
-    exit 1
-fi
+# Default models (can be overridden via environment variables)
+GENERATION_MODEL="${GENERATION_MODEL:-qwen2.5-coder:7b}"
+EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text:latest}"
 
-echo "✅ Ollama container is running"
-
-# Check container health
-echo ""
-echo "Checking Ollama container health..."
-if ! docker inspect ollama --format='{{.State.Health.Status}}' | grep -q 'healthy\|starting'; then
-    echo "⚠️  Warning: Ollama container may not be healthy"
-    echo "Container status: $(docker inspect ollama --format='{{.State.Status}}')"
-    echo "Waiting 30 seconds for container to stabilize..."
-    sleep 30
-fi
-
-# Wait for Ollama service to be ready inside the container
-echo ""
-echo "Waiting for Ollama service to be ready..."
-max_attempts=90  # Increased for VPS (slower startup)
+# Wait for Ollama service to be ready
+echo -e "${YELLOW}Waiting for Ollama service to be ready...${NC}"
+max_attempts=60
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    # Test if we can list models (this means Ollama is ready)
-    if docker exec ollama ollama list > /dev/null 2>&1; then
-        echo "✅ Ollama service is ready"
+    if curl -f http://localhost:11434/api/tags > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Ollama service is ready${NC}"
         break
     fi
     attempt=$((attempt + 1))
     if [ $((attempt % 10)) -eq 0 ]; then
-        echo "Attempt $attempt/$max_attempts: Still waiting for Ollama service..."
-        # Check if container is still running
-        if ! docker ps --format '{{.Names}}' | grep -q '^ollama$'; then
-            echo "❌ ERROR: Ollama container stopped unexpectedly!"
-            echo "Check logs with: docker compose logs ollama"
-            exit 1
-        fi
+        echo "Attempt $attempt/$max_attempts: Waiting for Ollama..."
     fi
     sleep 2
 done
 
 if [ $attempt -eq $max_attempts ]; then
-    echo "❌ ERROR: Ollama service failed to start after $max_attempts attempts"
-    echo "Check logs with: docker compose logs ollama"
-    echo "Check container status: docker ps -a | grep ollama"
+    echo -e "${RED}❌ ERROR: Ollama service not ready after $max_attempts attempts${NC}"
     exit 1
 fi
 
-# Pull embedding model with retry logic (VPS may have network issues)
-echo ""
-echo "📥 Pulling embedding model: nomic-embed-text:latest"
-echo "This may take a few minutes (~274MB download)..."
-MAX_RETRIES=3
-RETRY_COUNT=0
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker exec ollama ollama pull nomic-embed-text:latest; then
-        echo "✅ Successfully pulled nomic-embed-text:latest"
-        break
+# Function to check if model exists
+check_model_exists() {
+    local model=$1
+    docker exec ollama ollama list 2>/dev/null | grep -q "$model" || return 1
+}
+
+# Function to pull model
+pull_model() {
+    local model=$1
+    local model_type=$2
+    
+    echo -e "\n${YELLOW}📥 Pulling $model_type model: $model${NC}"
+    echo "This may take several minutes depending on your internet connection..."
+    
+    if docker exec ollama ollama pull "$model"; then
+        echo -e "${GREEN}✅ Successfully pulled $model${NC}"
+        return 0
     else
-        RETRY_COUNT=$((RETRY_COUNT + 1))
-        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-            echo "⚠️  Pull failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
-            sleep 5
-        else
-            echo "❌ ERROR: Failed to pull nomic-embed-text:latest after $MAX_RETRIES attempts"
-            exit 1
-        fi
+        echo -e "${RED}❌ Failed to pull $model${NC}"
+        return 1
     fi
-done
+}
 
-# Pull generation model with retry logic
-echo ""
-echo "📥 Pulling generation model: qwen2.5-coder:1.5b"
-echo "This may take a few minutes (~1.0GB download)..."
-RETRY_COUNT=0
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker exec ollama ollama pull qwen2.5-coder:1.5b; then
-        echo "✅ Successfully pulled qwen2.5-coder:1.5b"
-        break
-    else
-        RETRY_COUNT=$((RETRY_COUNT + 1))
-        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-            echo "⚠️  Pull failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
-            sleep 5
-        else
-            echo "❌ ERROR: Failed to pull qwen2.5-coder:1.5b after $MAX_RETRIES attempts"
-            exit 1
-        fi
-    fi
-done
-
-# Verify models are installed
-echo ""
-echo "Verifying installed models..."
-docker exec ollama ollama list
-
-# Test model inference (optional, but recommended for VPS)
-echo ""
-echo "Testing model inference..."
-if docker exec ollama ollama run nomic-embed-text "test" > /dev/null 2>&1; then
-    echo "✅ Embedding model test successful"
+# Check and install generation model
+echo -e "\n${YELLOW}Checking generation model: $GENERATION_MODEL${NC}"
+if check_model_exists "$GENERATION_MODEL"; then
+    echo -e "${GREEN}✅ Generation model $GENERATION_MODEL already installed${NC}"
 else
-    echo "⚠️  Warning: Embedding model test failed, but model is installed"
+    pull_model "$GENERATION_MODEL" "Generation" || exit 1
 fi
 
+# Check and install embedding model
+echo -e "\n${YELLOW}Checking embedding model: $EMBEDDING_MODEL${NC}"
+if check_model_exists "$EMBEDDING_MODEL"; then
+    echo -e "${GREEN}✅ Embedding model $EMBEDDING_MODEL already installed${NC}"
+else
+    pull_model "$EMBEDDING_MODEL" "Embedding" || exit 1
+fi
+
+# Verify models are working
+echo -e "\n${YELLOW}🧪 Testing models...${NC}"
+
+echo "Testing generation model..."
+if docker exec ollama ollama run "$GENERATION_MODEL" "Hello" > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Generation model is working${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Could not test generation model${NC}"
+fi
+
+echo -e "\n${GREEN}=================================="
+echo -e "✅ Ollama Models Initialization Complete!"
+echo -e "==================================${NC}"
 echo ""
-echo "=========================================="
-echo "✅ Ollama models successfully initialized"
-echo "=========================================="
+echo "Installed models:"
+docker exec ollama ollama list
 echo ""
-echo "Available models inside Docker container:"
-echo "  - nomic-embed-text:latest (embeddings, ~274MB)"
-echo "  - qwen2.5-coder:1.5b (generation, ~1.0GB)"
-echo ""
-echo "Models are stored in Docker volume: ollama_data"
-echo "Ollama is accessible at: http://localhost:11434"
-echo "For VPS: Update OPENAI_API_URL in .env.app to: http://ollama:11434/v1"
-echo ""
+echo "You can now use the application with Ollama models!"

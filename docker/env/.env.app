@@ -19,8 +19,8 @@ OPENAI_API_KEY="not-needed"
 OPENAI_API_URL="http://ollama:11434/v1/"
 COHERE_API_KEY="not-needed"
 
-GENERATION_MODEL_ID_LITERAL = ["gpt-4o-mini", "qwen2.5-coder:1.5b"]
-GENERATION_MODEL_ID="qwen2.5-coder:1.5b"
+GENERATION_MODEL_ID_LITERAL = ["gpt-4o-mini", "qwen2.5-coder:7b"]
+GENERATION_MODEL_ID="qwen2.5-coder:7b"
 EMBEDDING_MODEL_ID="nomic-embed-text:latest"
 EMBEDDING_MODEL_SIZE=768
 

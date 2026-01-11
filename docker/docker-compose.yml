@@ -287,7 +287,8 @@ services:
       # VPS Optimization: Enable verbose logging for debugging
       - OLLAMA_DEBUG=${OLLAMA_DEBUG:-false}
     # VPS Resource Limits - Adjust based on your VPS specifications
-    # Recommended minimum: 4GB RAM, 2 CPU cores
+    # Recommended minimum for 7B model: 8GB RAM, 2 CPU cores
+    # For 1.5B model: 4GB RAM is sufficient
     deploy:
       resources:
         limits:
@@ -310,6 +311,32 @@ services:
       timeout: 10s
       retries: 5
       start_period: 90s # Increased for VPS to allow model loading
+
+  # Ollama Model Initialization Service
+  # This is a one-time service that installs Ollama models automatically
+  # It runs after Ollama service is healthy, then exits
+  # Uses ollama image so we can use the ollama CLI directly (more reliable than API)
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    networks:
+      - backend
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - GENERATION_MODEL=${GENERATION_MODEL:-qwen2.5-coder:7b}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text:latest}
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./init-ollama-service.sh:/init-ollama.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache bash
+        chmod +x /init-ollama.sh
+        /init-ollama.sh
+    restart: "no"
 
 networks:
   backend:
