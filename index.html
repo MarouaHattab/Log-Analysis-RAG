@@ -1482,9 +1482,30 @@
             );
           }
         } catch (e) {
+          console.error("Upload error:", e);
+          console.error("API Base URL:", apiBase);
+          console.error("Full error:", e);
+          const errorMsg = e.message || e.toString() || "Connection error";
+          let userMessage = `Connection error: ${errorMsg}`;
+
+          // Check for common issues
+          if (
+            errorMsg.includes("Failed to fetch") ||
+            errorMsg.includes("NetworkError")
+          ) {
+            if (
+              window.location.protocol === "https:" &&
+              apiBase.startsWith("http://")
+            ) {
+              userMessage = `Mixed Content Error: HTTPS page cannot access HTTP API. Your API server needs HTTPS support, or use environment variables with https:// URLs.`;
+            } else {
+              userMessage = `Network Error: Cannot reach API at ${apiBase}. Check CORS settings on your API server.`;
+            }
+          }
+
           notify(
             "uploadResult",
-            "Connection error. Please verify the API is running.",
+            `${userMessage}<br><small>API URL: ${apiBase}</small>`,
             "error"
           );
         } finally {

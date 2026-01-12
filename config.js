@@ -10,23 +10,35 @@
   const WS_BASE_URL = 'ws://4.232.170.195/';
 
   // Auto-detect protocol based on current page protocol
-  // If page is served over HTTPS, use HTTPS/WSS for API
   const currentProtocol = window.location.protocol;
   const isSecure = currentProtocol === 'https:';
   
-  // Convert HTTP to HTTPS and WS to WSS if page is served over HTTPS
   let apiBase = API_BASE_URL;
   let wsBase = WS_BASE_URL;
   
-  if (isSecure) {
-    // Replace http:// with https://
-    if (apiBase.startsWith('http://')) {
-      apiBase = apiBase.replace('http://', 'https://');
-    }
-    // Replace ws:// with wss://
-    if (wsBase.startsWith('ws://')) {
-      wsBase = wsBase.replace('ws://', 'wss://');
-    }
+  // IMPORTANT: Browsers block HTTP requests from HTTPS pages (mixed content)
+  // If your API server supports HTTPS, use https:// URLs in environment variables
+  // If your API server only supports HTTP, you have two options:
+  // 1. Use a proxy/CORS proxy service
+  // 2. Set up HTTPS on your API server
+  
+  // For now, keep the original protocol to avoid auto-conversion issues
+  // If deployed on HTTPS and API is HTTP, browser will block it (this is expected)
+  // You'll need to either:
+  // - Set environment variables with https:// URLs if your API supports HTTPS
+  // - Or use a CORS proxy
+  if (isSecure && apiBase.startsWith('http://') && !apiBase.includes('4.232.170.195')) {
+    // Only auto-convert for non-default APIs that might support HTTPS
+    apiBase = apiBase.replace('http://', 'https://');
+  }
+  if (isSecure && wsBase.startsWith('ws://') && !wsBase.includes('4.232.170.195')) {
+    wsBase = wsBase.replace('ws://', 'wss://');
+  }
+  
+  // Log warning if there's a protocol mismatch
+  if (isSecure && (apiBase.startsWith('http://') || wsBase.startsWith('ws://'))) {
+    console.warn('⚠️ WARNING: HTTPS page trying to access HTTP API. Browser may block this due to mixed content policy.');
+    console.warn('⚠️ Solution: Use HTTPS/WSS URLs or set up a CORS proxy.');
   }
   
   // Make available globally
