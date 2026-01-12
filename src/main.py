@@ -15,9 +15,12 @@ from utils.metrics import setup_metrics
 app = FastAPI()
 
 # Add CORS middleware to handle preflight OPTIONS requests
+# Allow all origins - includes GitHub Pages (https://marouahattab.github.io) and local development
+# For production, consider restricting to specific origins:
+# allow_origins=["https://marouahattab.github.io", "http://localhost:8000", ...]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (for development)
+    allow_origins=["*"],  # Allow all origins (supports GitHub Pages and local development)
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods including OPTIONS
     allow_headers=["*"],  # Allow all headers
