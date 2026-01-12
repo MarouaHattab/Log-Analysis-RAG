@@ -9,7 +9,8 @@ font = "sans serif"
 headless = true
 port = 8501
 enableCORS = false
-enableXsrfProtection = true
+enableXsrfProtection = false
+maxUploadSize = 1024
 
 [browser]
 gatherUsageStats = false

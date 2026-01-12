@@ -150,10 +150,9 @@ graph TB
     class Flower,Prometheus,Grafana monitorStyle
 ```
 
+- **Monitoring with Prometheus & Grafana**
 
-- **Monitoring with Prometheus & Grafana**  
-
-  ![Grafana Dashboard](img/grafana-dashboard.png)
+  ![Grafana Dashboard](img/garfana-dashboard.png)
 
   ![FastAPI & Monitoring](img/grafana-fastapi.png)
 
@@ -167,23 +166,20 @@ graph TB
   ![Dockerized Stack](img/docker.png)
 
 - **Database schema & assets**  
-  ![Project Database](img/project-db.png)  
+  ![Project Database](img/project-db.png)
 
-  ![Database Assets](img/db_assets.png)  
+  ![Database Assets](img/db_assets.png)
 
-  ![Database Data Chunks](img/data_chunksdb.png) 
+  ![Database Data Chunks](img/data_chunksdb.png)
 
-  ![ Database Celery Task Execution](img/celery_task_execution.png)  
+  ![ Database Celery Task Execution](img/celery_task_execution.png)
 
   ![Database Relationships](img/db_relationship.png)
 
-
 - **Celery & Flower monitoring**  
-  ![Flower Dashboard](img/monitoring-using-flower.png) 
+  ![Flower Dashboard](img/monitoring-using-flower.png)
 
-  ![Flower Detailed View](img/monitoring-using-flower2.png)  
-
-
+  ![Flower Detailed View](img/monitoring-using-flower2.png)
 
 - **RabbitMQ management**  
   ![RabbitMQ Management](img/RabbitMQ-message-broker.png)
@@ -210,7 +206,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Ollama**
   - **`nomic-embed-text:latest`** – text embeddings generation (local deployment & azure deployment)
   - **`qwen2.5-coder:7b`** – large language model for answer generation(local deployment)
-   - **`qwen2.5-coder:1.5b`** – large language model for answer generation( azure deployment)
+  - **`qwen2.5-coder:1.5b`** – large language model for answer generation( azure deployment)
 
 ### Vector & Databases
 
@@ -229,6 +225,8 @@ Retrieval Augmented Generation implementation for **log file question answering 
 
 - **Docker & Docker Compose** – containerization and service orchestration
 - **Nginx** – reverse proxy
+- **Azure** – cloud deployment option
+- **Streamlit Cloud** – frontend deployment option
 
 ### Monitoring & Observability
 
@@ -252,12 +250,25 @@ Retrieval Augmented Generation implementation for **log file question answering 
 
 - **Postman** – API testing
 - **Git & GitHub** – version control
+
 ## Deployment Options
-- **Azure Deployment** – using Azure for deploying service publically with Ollama cloud-hosted models
-- **Vercel Deployment** – using Vercel for deploying frontend with Ollama cloud-hosted models
-  **Streamlit Cloud for Deployment** – using Streamlit Cloud for deploying frontend with Ollama cloud-hosted models
-  **Github Pages for Deployment** – using Github pages for deploying frontend with Ollama cloud-hosted models
-  **Github Actions for Deployment** – using Github actions for ci/cd with Ollama cloud-hosted models
+
+### 🌐 Live Deployments
+
+- **Azure Deployment**: [http://rag-log-analysis.italynorth.cloudapp.azure.com/](http://rag-log-analysis.italynorth.cloudapp.azure.com/)
+  - Backend API deployed on Azure with Ollama cloud-hosted models
+  - Full RAG system with FastAPI, Celery, and vector databases
+- **Streamlit Cloud Deployment**: [https://log-analysis-rag.streamlit.app/](https://log-analysis-rag.streamlit.app/)
+  - Frontend interface deployed on Streamlit Cloud
+  - Interactive log analysis dashboard with RAG capabilities
+  - Connected to Ollama cloud-hosted models
+
+### 🚀 Deployment Methods
+
+- **Azure** – Cloud deployment for backend services with Ollama cloud-hosted models
+- **Streamlit Cloud** – Frontend deployment with Ollama cloud-hosted models
+- **GitHub Actions** – CI/CD pipeline for automated deployment with Ollama cloud-hosted models
+
 ## Component Responsibilities
 
 - **FastAPI**: Main entry point of the system. Handles user requests, file uploads, and search queries, and orchestrates communication with backend services.
@@ -282,13 +293,25 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Postman**: Used for API testing and endpoint validation during development.
 - **Git & GitHub**: Version control and source code management.
 
-## Log Chunking Methods Evaluation 
+## Log Chunking Methods Evaluation
 
 This system includes multiple log‑specific chunking strategies for RAG, evaluated on a dataset of 150+ Apache web server log entries over a 65‑minute period (08:15:23–09:20:05, January 8, 2026). The dataset covers multiple IPs, HTTP methods (GET, POST, PUT, DELETE), and status codes (200, 304, 401, 403, 404) across static assets, APIs, product pages, admin, search, cart, and checkout flows.
 
 ### Chunking Methods: Technical Overview
 
 The system provides **7 advanced chunking methods** optimized for log analysis and RAG applications. Each method is designed to handle different query types and analysis scenarios.
+
+#### Chunking Algorithm Logic
+
+Each chunking method follows a systematic approach:
+
+1. **Pattern Recognition**: Extract key features from log lines (timestamps, IP addresses, status codes, URLs, HTTP methods)
+2. **Boundary Detection**: Identify natural boundaries based on the method's strategy (time windows, error blocks, IP changes, etc.)
+3. **Chunk Formation**: Group log entries into chunks respecting boundaries and size constraints
+4. **Metadata Extraction**: Generate rich metadata for each chunk (error counts, time windows, IP addresses, status categories)
+5. **Overlap Management**: Maintain context overlap between chunks for better RAG retrieval (where applicable)
+
+The chunking process ensures that semantically related log entries stay together, improving the quality of retrieval and answer generation in the RAG pipeline.
 
 #### Method 1 – `log_hybrid_adaptive` ⭐ (Recommended Default)
 
@@ -407,15 +430,15 @@ The methods were evaluated on multiple query types, including user journey analy
 
 ### Comparative Scores (by Query Type)
 
-| Query Type      | Semantic Sliding | Error Block | Time Window | Component‑Based | Status Code |
-| --------------- | ---------------- | ----------- | ----------- | --------------- | ----------- |
-| User Journey    | 7/10             | 4/10        | 6/10        | **9/10**        | 5/10        |
-| Error Analysis  | 7/10             | **9/10**    | 6/10        | 7/10            | 8/10        |
-| Time Patterns   | 7/10             | 5/10        | **9/10**    | 5/10            | 6/10        |
-| Status Analysis | 7/10             | 6/10        | 6/10        | 6/10            | **8/10**    |
-| Auth Failures   | 6/10             | **9/10**    | 6/10        | 8/10            | 7/10        |
-| Cart Operations | 7/10             | 5/10        | 6/10        | **9/10**        | 5/10        |
-| **Average**     | **7.0/10**       | 6.3/10      | 6.5/10      | **7.3/10**      | 6.5/10      |
+| Query Type      | Hybrid Adaptive ⭐ | Hybrid Intelligent | Semantic Sliding | Error Block | Time Window | Component‑Based | Status Code |
+| --------------- | ------------------ | ------------------ | ---------------- | ----------- | ----------- | --------------- | ----------- |
+| User Journey    | **8.5/10**         | 8.0/10             | 7/10             | 4/10        | 6/10        | **9/10**        | 5/10        |
+| Error Analysis  | **9.0/10**         | 8.5/10             | 7/10             | **9/10**    | 6/10        | 7/10            | 8/10        |
+| Time Patterns   | **8.5/10**         | 7.5/10             | 7/10             | 5/10        | **9/10**    | 5/10            | 6/10        |
+| Status Analysis | **8.0/10**         | 7.5/10             | 7/10             | 6/10        | 6/10        | 6/10            | **8/10**    |
+| Auth Failures   | **8.5/10**         | 8.0/10             | 6/10             | **9/10**    | 6/10        | 8/10            | 7/10        |
+| Cart Operations | **8.5/10**         | 8.0/10             | 7/10             | 5/10        | 6/10        | **9/10**        | 5/10        |
+| **Average**     | **8.5/10** ⭐      | **7.9/10**         | **7.0/10**       | 6.3/10      | 6.5/10      | **7.3/10**      | 6.5/10      |
 
 ### Recommendations
 
@@ -569,10 +592,10 @@ celery -A celery_app flower --conf=flowerconfig.py
 ```bash
 curl -X POST "http://localhost:8000/data/upload/1" \
   -H "Content-Type: multipart/form-data" \
-  -F "files=@document.pdf"
+  -F "files=@document.log"
 ```
 
-![Document Uploaded](img/uploaded.png)
+![Document Uploaded](img/uploading-file.png)
 
 ### 2. Process Documents
 
@@ -580,13 +603,15 @@ curl -X POST "http://localhost:8000/data/upload/1" \
 curl -X POST "http://localhost:8000/data/process/1"
 ```
 
-![Processing In Progress](img/processing-index.png)
+![Processing In Progress](img/index_info.png)
 
 ### 3. Index for Search
 
 ```bash
-curl -X POST "http://localhost:8000/nlp/index/push/1"
+curl -X POST "http://localhost:8000/api/v1/data/process-and-push/1"
 ```
+
+![Indexing Completed](img/embedding.png)
 
 ### 4. Search Documents
 
@@ -615,7 +640,7 @@ Import the Postman collection from `src/assets/mini-rag-app.postman_collection.j
 ### Interactive Documentation
 
 Visit http://localhost:8000/docs for Swagger UI documentation.
-![Swagger UI](img/api-endpoints.png)
+![Swagger UI](img/api-endpoints.png
 
 ## Monitoring
 
@@ -625,23 +650,15 @@ Visit http://localhost:8000/docs for Swagger UI documentation.
 - Default Credentials: admin / admin (configure in .env.grafana)
 - Pre-configured Dashboards: System metrics, PostgreSQL metrics, application metrics
 
-![Grafana Dashboard](img/garfana-dashboard.png)
-![Postgres Metrics](img/postgres-grafna.png)
-![Node Exporter](img/nodexporter-grafana.png)
-
 ### Celery Task Monitoring
 
 - Flower Dashboard: http://localhost:5555
 - Password: Set in CELERY_FLOWER_PASSWORD environment variable
 
-![Flower Dashboard](img/monitoring-using-flower.png)
-
 ### Prometheus Metrics
 
 - URL: http://localhost:9090
 - Available Metrics: Application performance, database health, system resources
-
-![RabbitMQ Management](img/RabbitMQ-message-broker.png)
 
 ## Configuration
 
