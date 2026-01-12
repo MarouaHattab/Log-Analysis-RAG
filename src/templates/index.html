@@ -34,25 +34,26 @@
       .code-font {
         font-family: "Courier New", monospace;
       }
-      
+
       /* Progress bar animations */
       .progress-bar {
         transition: width 0.3s ease-in-out;
       }
-      
+
       @keyframes pulse-glow {
-        0%, 100% {
+        0%,
+        100% {
           box-shadow: 0 0 5px rgba(147, 51, 234, 0.5);
         }
         50% {
           box-shadow: 0 0 20px rgba(147, 51, 234, 0.8);
         }
       }
-      
+
       .processing-active {
         animation: pulse-glow 2s infinite;
       }
-      
+
       @keyframes shimmer {
         0% {
           background-position: -200% 0;
@@ -61,12 +62,14 @@
           background-position: 200% 0;
         }
       }
-      
+
       .shimmer-effect {
-        background: linear-gradient(90deg, 
-          rgba(147, 51, 234, 0.05) 25%, 
-          rgba(147, 51, 234, 0.1) 50%, 
-          rgba(147, 51, 234, 0.05) 75%);
+        background: linear-gradient(
+          90deg,
+          rgba(147, 51, 234, 0.05) 25%,
+          rgba(147, 51, 234, 0.1) 50%,
+          rgba(147, 51, 234, 0.05) 75%
+        );
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
         display: flex;
@@ -222,78 +225,144 @@
               >
               <div class="relative" id="customChunkingDropdown">
                 <!-- Hidden Input for Form/API Value -->
-                <input type="hidden" id="chunkingMethod" value="log_hybrid_adaptive" />
-                
+                <input
+                  type="hidden"
+                  id="chunkingMethod"
+                  value="log_hybrid_adaptive"
+                />
+
                 <!-- Dropdown Trigger -->
                 <button
                   onclick="toggleChunkingDropdown()"
                   class="w-full bg-white border border-gray-200 hover:border-purple-300 rounded-xl px-4 py-3 text-left flex items-center justify-between transition-all shadow-sm focus:ring-2 focus:ring-purple-100 outline-none group"
                 >
-                  <span class="text-gray-700 font-medium truncate" id="selectedChunkingText">
+                  <span
+                    class="text-gray-700 font-medium truncate"
+                    id="selectedChunkingText"
+                  >
                     Hybrid Adaptive - Best for general analysis
                   </span>
-                  <svg 
+                  <svg
                     id="dropdownArrow"
-                    class="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-transform duration-200" 
-                    fill="none" 
-                    stroke="currentColor" 
+                    class="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
                   </svg>
                 </button>
 
                 <!-- Dropdown Menu -->
-                <div 
-                  id="chunkingOptions" 
+                <div
+                  id="chunkingOptions"
                   class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden divide-y divide-gray-50 max-h-[300px] overflow-y-auto"
                 >
                   <!-- Options will be populated or static -->
-                  <div onclick="selectChunkingOption('log_hybrid_adaptive', 'Hybrid Adaptive - Best for general analysis')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                    <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_hybrid_adaptive', 'Hybrid Adaptive - Best for general analysis')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Hybrid Adaptive</div>
-                      <div class="text-xs text-gray-500">Best for general log analysis</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Hybrid Adaptive
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Best for general log analysis
+                      </div>
                     </div>
                   </div>
 
-                  <div onclick="selectChunkingOption('log_hybrid_intelligent', 'Hybrid Intelligent - Context-aware splitting')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                     <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_hybrid_intelligent', 'Hybrid Intelligent - Context-aware splitting')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Hybrid Intelligent</div>
-                      <div class="text-xs text-gray-500">Context-aware splitting</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Hybrid Intelligent
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Context-aware splitting
+                      </div>
                     </div>
                   </div>
 
-                  <div onclick="selectChunkingOption('log_time_window', 'Time Window - Group by time periods')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                     <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_time_window', 'Time Window - Group by time periods')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Time Window</div>
-                      <div class="text-xs text-gray-500">Group by time periods</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Time Window
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Group by time periods
+                      </div>
                     </div>
                   </div>
 
-                  <div onclick="selectChunkingOption('log_error_block', 'Error Block - Group errors together')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                     <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_error_block', 'Error Block - Group errors together')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Error Block</div>
-                      <div class="text-xs text-gray-500">Group errors together</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Error Block
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Group errors together
+                      </div>
                     </div>
                   </div>
 
-                  <div onclick="selectChunkingOption('log_component_based', 'Component Based - Group by IP/source')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                     <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_component_based', 'Component Based - Group by IP/source')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Component Based</div>
-                      <div class="text-xs text-gray-500">Group by IP/source</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Component Based
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Group by IP/source
+                      </div>
                     </div>
                   </div>
 
-                  <div onclick="selectChunkingOption('log_semantic_sliding', 'Semantic Sliding - Context window with overlap')" class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group">
-                     <div class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                  <div
+                    onclick="selectChunkingOption('log_semantic_sliding', 'Semantic Sliding - Context window with overlap')"
+                    class="p-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors group"
+                  >
+                    <div
+                      class="w-1 h-8 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                    ></div>
                     <div>
-                      <div class="text-sm font-medium text-gray-800">Semantic Sliding</div>
-                      <div class="text-xs text-gray-500">Context window with overlap</div>
+                      <div class="text-sm font-medium text-gray-800">
+                        Semantic Sliding
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Context window with overlap
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -329,34 +398,51 @@
                 >
                 <div class="relative" id="customResetDropdown">
                   <input type="hidden" id="doRest" value="1" />
-                  
+
                   <button
                     onclick="toggleResetDropdown()"
                     class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between transition-all focus:ring-2 focus:ring-purple-200 outline-none group"
                   >
-                    <span id="selectedResetText" class="text-gray-900">Yes</span>
-                    <svg 
+                    <span id="selectedResetText" class="text-gray-900"
+                      >Yes</span
+                    >
+                    <svg
                       id="resetDropdownArrow"
-                      class="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-transform duration-200" 
-                      fill="none" 
-                      stroke="currentColor" 
+                      class="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-transform duration-200"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
                     </svg>
                   </button>
 
-                  <div 
-                    id="resetOptions" 
+                  <div
+                    id="resetOptions"
                     class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 overflow-hidden divide-y divide-gray-50"
                   >
-                    <div onclick="selectResetOption('1', 'Yes')" class="p-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors group">
-                      <div class="w-1 h-4 bg-purple-500 rounded-full transition-colors"></div>
+                    <div
+                      onclick="selectResetOption('1', 'Yes')"
+                      class="p-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors group"
+                    >
+                      <div
+                        class="w-1 h-4 bg-purple-500 rounded-full transition-colors"
+                      ></div>
                       <span class="text-sm text-gray-800">Yes</span>
                     </div>
 
-                    <div onclick="selectResetOption('0', 'No')" class="p-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors group">
-                       <div class="w-1 h-4 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"></div>
+                    <div
+                      onclick="selectResetOption('0', 'No')"
+                      class="p-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors group"
+                    >
+                      <div
+                        class="w-1 h-4 bg-transparent group-hover:bg-purple-500 rounded-full transition-colors"
+                      ></div>
                       <span class="text-sm text-gray-800">No</span>
                     </div>
                   </div>
@@ -378,21 +464,42 @@
                 <!-- Status Header -->
                 <div class="flex items-center justify-between mb-3">
                   <div class="flex items-center gap-2">
-                    <div id="progressSpinner" class="animate-spin rounded-full h-5 w-5 border-2 border-purple-600 border-t-transparent"></div>
-                    <span id="progressStatus" class="font-semibold text-purple-900">Processing...</span>
+                    <div
+                      id="progressSpinner"
+                      class="animate-spin rounded-full h-5 w-5 border-2 border-purple-600 border-t-transparent"
+                    ></div>
+                    <span
+                      id="progressStatus"
+                      class="font-semibold text-purple-900"
+                      >Processing...</span
+                    >
                   </div>
-                  <span id="progressPercentage" class="text-sm font-bold text-purple-600">0%</span>
+                  <span
+                    id="progressPercentage"
+                    class="text-sm font-bold text-purple-600"
+                    >0%</span
+                  >
                 </div>
-                
+
                 <!-- Progress Bar -->
-                <div class="w-full bg-purple-200 rounded-full h-3 mb-3 overflow-hidden">
-                  <div id="progressBar" class="progress-bar bg-purple-600 h-3 rounded-full shimmer-effect" style="width: 0%"></div>
+                <div
+                  class="w-full bg-purple-200 rounded-full h-3 mb-3 overflow-hidden"
+                >
+                  <div
+                    id="progressBar"
+                    class="progress-bar bg-purple-600 h-3 rounded-full shimmer-effect"
+                    style="width: 0%"
+                  ></div>
                 </div>
-                
+
                 <!-- Current Step Info -->
                 <div class="flex items-center justify-between text-sm">
-                  <span id="progressMessage" class="text-purple-700">Initializing workflow...</span>
-                  <span id="progressStep" class="text-purple-500">Step 0/2</span>
+                  <span id="progressMessage" class="text-purple-700"
+                    >Initializing workflow...</span
+                  >
+                  <span id="progressStep" class="text-purple-500"
+                    >Step 0/2</span
+                  >
                 </div>
               </div>
             </div>
@@ -470,43 +577,83 @@
 
         <!-- Dashboard Panel -->
         <div id="panel-dashboard" class="hidden">
-           <!-- Metrics Cards -->
-           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div class="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
-                  <div class="text-xs text-purple-600 font-bold uppercase">Total Requests</div>
-                  <div class="text-2xl font-bold text-gray-900" id="stat-total">-</div>
+          <!-- Metrics Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-purple-100"
+            >
+              <div class="text-xs text-purple-600 font-bold uppercase">
+                Total Requests
               </div>
-              <div class="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
-                  <div class="text-xs text-purple-600 font-bold uppercase">Unique Visitors</div>
-                  <div class="text-2xl font-bold text-gray-900" id="stat-visitors">-</div>
+              <div class="text-2xl font-bold text-gray-900" id="stat-total">
+                -
               </div>
-              <div class="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
-                  <div class="text-xs text-purple-600 font-bold uppercase">Bandwidth</div>
-                  <div class="text-2xl font-bold text-gray-900" id="stat-bandwidth">-</div>
+            </div>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-purple-100"
+            >
+              <div class="text-xs text-purple-600 font-bold uppercase">
+                Unique Visitors
               </div>
-              <div class="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
-                  <div class="text-xs text-purple-600 font-bold uppercase">Error Rate</div>
-                  <div class="text-2xl font-bold text-gray-900" id="stat-error">-</div>
+              <div class="text-2xl font-bold text-gray-900" id="stat-visitors">
+                -
               </div>
+            </div>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-purple-100"
+            >
+              <div class="text-xs text-purple-600 font-bold uppercase">
+                Bandwidth
+              </div>
+              <div class="text-2xl font-bold text-gray-900" id="stat-bandwidth">
+                -
+              </div>
+            </div>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-purple-100"
+            >
+              <div class="text-xs text-purple-600 font-bold uppercase">
+                Error Rate
+              </div>
+              <div class="text-2xl font-bold text-gray-900" id="stat-error">
+                -
+              </div>
+            </div>
           </div>
-          
+
           <!-- Charts -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container">
-              <div class="absolute inset-0 shimmer-effect z-10 chart-loader"></div>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container"
+            >
+              <div
+                class="absolute inset-0 shimmer-effect z-10 chart-loader"
+              ></div>
               <canvas id="chartTraffic"></canvas>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container">
-               <div class="absolute inset-0 shimmer-effect z-10 chart-loader"></div>
-               <canvas id="chartStatus"></canvas>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container"
+            >
+              <div
+                class="absolute inset-0 shimmer-effect z-10 chart-loader"
+              ></div>
+              <canvas id="chartStatus"></canvas>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container">
-               <div class="absolute inset-0 shimmer-effect z-10 chart-loader"></div>
-               <canvas id="chartTopIPs"></canvas>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container"
+            >
+              <div
+                class="absolute inset-0 shimmer-effect z-10 chart-loader"
+              ></div>
+              <canvas id="chartTopIPs"></canvas>
             </div>
-             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container">
-               <div class="absolute inset-0 shimmer-effect z-10 chart-loader"></div>
-               <canvas id="chartTopURLs"></canvas>
+            <div
+              class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-80 relative overflow-hidden chart-container"
+            >
+              <div
+                class="absolute inset-0 shimmer-effect z-10 chart-loader"
+              ></div>
+              <canvas id="chartTopURLs"></canvas>
             </div>
           </div>
         </div>
@@ -540,7 +687,9 @@
 
         <!-- Answer Panel -->
         <div id="panel-answer" class="hidden">
-          <div class="flex flex-col h-[800px] bg-white rounded-lg shadow-xl overflow-hidden border border-gray-200">
+          <div
+            class="flex flex-col h-[800px] bg-white rounded-lg shadow-xl overflow-hidden border border-gray-200"
+          >
             <!-- Chat Header -->
             <div
               class="bg-white border-b border-gray-100 p-5 flex items-center gap-4 shadow-sm z-10"
@@ -571,9 +720,19 @@
                 </p>
               </div>
               <!-- Connection Status Indicator -->
-              <div id="wsConnectionStatus" class="ml-auto flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-                <div id="wsStatusDot" class="w-2.5 h-2.5 rounded-full bg-gray-400 animate-pulse"></div>
-                <span id="wsStatusText" class="text-xs font-medium text-gray-500">Disconnected</span>
+              <div
+                id="wsConnectionStatus"
+                class="ml-auto flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-100"
+              >
+                <div
+                  id="wsStatusDot"
+                  class="w-2.5 h-2.5 rounded-full bg-gray-400 animate-pulse"
+                ></div>
+                <span
+                  id="wsStatusText"
+                  class="text-xs font-medium text-gray-500"
+                  >Disconnected</span
+                >
               </div>
             </div>
 
@@ -582,7 +741,9 @@
               id="chatMessages"
               class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50 scroll-smooth"
             >
-              <div class="flex items-start gap-4 animate-[fadeIn_0.5s_ease-out]">
+              <div
+                class="flex items-start gap-4 animate-[fadeIn_0.5s_ease-out]"
+              >
                 <div
                   class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md"
                 >
@@ -604,21 +765,64 @@
                   class="bg-white border border-gray-100 p-6 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-gray-700"
                 >
                   <p class="leading-relaxed text-[15px]">
-                    Hello! I'm your intelligent log analysis assistant. I'm here to help you uncover insights from your data.
+                    Hello! I'm your intelligent log analysis assistant. I'm here
+                    to help you uncover insights from your data.
                   </p>
-                  <div class="mt-4 bg-purple-50 rounded-xl p-4 border border-purple-100">
-                    <p class="text-xs font-semibold text-purple-800 uppercase tracking-wide mb-2">I can help you:</p>
+                  <div
+                    class="mt-4 bg-purple-50 rounded-xl p-4 border border-purple-100"
+                  >
+                    <p
+                      class="text-xs font-semibold text-purple-800 uppercase tracking-wide mb-2"
+                    >
+                      I can help you:
+                    </p>
                     <ul class="space-y-2 text-sm text-purple-900">
                       <li class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <svg
+                          class="w-4 h-4 text-purple-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                         Find specific errors or patterns
                       </li>
                       <li class="flex items-center gap-2">
-                         <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <svg
+                          class="w-4 h-4 text-purple-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
                         Analyze error frequencies and trends
                       </li>
                       <li class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg
+                          class="w-4 h-4 text-purple-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
                         Identify root causes of issues
                       </li>
                     </ul>
@@ -632,18 +836,34 @@
 
             <!-- Suggested Questions -->
             <div class="px-6 pb-2 pt-2 bg-white border-t border-gray-100">
-              <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Suggested Questions:</p>
+              <p
+                class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide"
+              >
+                Suggested Questions:
+              </p>
               <div class="flex flex-wrap gap-2">
-                <button onclick="useSuggestion('What are the most frequent errors?')" class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200">
+                <button
+                  onclick="useSuggestion('What are the most frequent errors?')"
+                  class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200"
+                >
                   Most frequent errors?
                 </button>
-                <button onclick="useSuggestion('Analyze the error trends over time')" class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200">
+                <button
+                  onclick="useSuggestion('Analyze the error trends over time')"
+                  class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200"
+                >
                   Error trends analysis
                 </button>
-                <button onclick="useSuggestion('Which IP addresses are causing issues?')" class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200">
+                <button
+                  onclick="useSuggestion('Which IP addresses are causing issues?')"
+                  class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200"
+                >
                   Suspicious IPs?
                 </button>
-                <button onclick="useSuggestion('Summary of the last hour activity')" class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200">
+                <button
+                  onclick="useSuggestion('Summary of the last hour activity')"
+                  class="text-xs bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-1.5 rounded-full transition-colors duration-200"
+                >
                   Last hour summary
                 </button>
               </div>
@@ -659,20 +879,40 @@
                   class="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
                   onkeypress="if(event.key === 'Enter') indexAnswer()"
                 />
-                
+
                 <button
                   onclick="toggleVoiceInput()"
                   id="voiceButton"
                   class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center border border-gray-200"
                   title="Voice Input"
                 >
-                  <svg id="micIcon" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                  <svg
+                    id="micIcon"
+                    class="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    ></path>
                   </svg>
-                  <div id="micWave" class="hidden flex gap-0.5 items-end h-5 w-5 justify-center">
-                    <div class="w-1 bg-purple-600 animate-[bounce_1s_infinite] h-2"></div>
-                    <div class="w-1 bg-purple-600 animate-[bounce_1s_infinite_0.2s] h-3"></div>
-                    <div class="w-1 bg-purple-600 animate-[bounce_1s_infinite_0.4s] h-2"></div>
+                  <div
+                    id="micWave"
+                    class="hidden flex gap-0.5 items-end h-5 w-5 justify-center"
+                  >
+                    <div
+                      class="w-1 bg-purple-600 animate-[bounce_1s_infinite] h-2"
+                    ></div>
+                    <div
+                      class="w-1 bg-purple-600 animate-[bounce_1s_infinite_0.2s] h-3"
+                    ></div>
+                    <div
+                      class="w-1 bg-purple-600 animate-[bounce_1s_infinite_0.4s] h-2"
+                    ></div>
                   </div>
                 </button>
 
@@ -704,9 +944,11 @@
     </div>
 
     <script>
-      const host = window.location.hostname || "127.0.0.1";
-      const apiBase = `http://${host}:8000`;
-      const wsBase = `ws://${host}:8000`;
+      // API Configuration - can be overridden by environment variables or config
+      const apiBase = window.API_BASE_URL || "http://4.232.170.195/";
+      const wsBase =
+        window.WS_BASE_URL ||
+        apiBase.replace(/^https?:\/\//, "ws://").replace(/^http:\/\//, "ws://");
 
       let chunkingMethodDescriptions = {
         log_hybrid_adaptive:
@@ -736,13 +978,12 @@
         document.getElementById("fileNameDisplay").textContent = name;
       });
 
-      
       // Custom Dropdown Logic
       function toggleChunkingDropdown() {
         const dropdown = document.getElementById("chunkingOptions");
         const arrow = document.getElementById("dropdownArrow");
         dropdown.classList.toggle("hidden");
-        
+
         if (!dropdown.classList.contains("hidden")) {
           arrow.classList.add("rotate-180");
         } else {
@@ -753,20 +994,24 @@
       function selectChunkingOption(value, text) {
         document.getElementById("chunkingMethod").value = value;
         document.getElementById("selectedChunkingText").textContent = text;
-        
+
         // Hide dropdown
         document.getElementById("chunkingOptions").classList.add("hidden");
         document.getElementById("dropdownArrow").classList.remove("rotate-180");
-        
+
         // Update styling for selected state (optional visual feedback)
         const options = document.getElementById("chunkingOptions").children;
-        Array.from(options).forEach(opt => {
+        Array.from(options).forEach((opt) => {
           if (opt.getAttribute("onclick").includes(value)) {
             opt.classList.add("bg-purple-50");
-            opt.querySelector(".w-1").classList.replace("bg-transparent", "bg-purple-500");
+            opt
+              .querySelector(".w-1")
+              .classList.replace("bg-transparent", "bg-purple-500");
           } else {
             opt.classList.remove("bg-purple-50");
-             opt.querySelector(".w-1").classList.replace("bg-purple-500", "bg-transparent");
+            opt
+              .querySelector(".w-1")
+              .classList.replace("bg-purple-500", "bg-transparent");
           }
         });
       }
@@ -776,17 +1021,29 @@
         // Chunking Dropdown
         const chunkDropdown = document.getElementById("chunkingOptions");
         const chunkTrigger = document.getElementById("customChunkingDropdown");
-        if (!chunkTrigger.contains(e.target) && !chunkDropdown.classList.contains("hidden")) {
+        if (
+          !chunkTrigger.contains(e.target) &&
+          !chunkDropdown.classList.contains("hidden")
+        ) {
           chunkDropdown.classList.add("hidden");
-           document.getElementById("dropdownArrow").classList.remove("rotate-180");
+          document
+            .getElementById("dropdownArrow")
+            .classList.remove("rotate-180");
         }
-        
+
         // Reset Dropdown
         const resetDropdown = document.getElementById("resetOptions");
         const resetTrigger = document.getElementById("customResetDropdown");
-        if (resetDropdown && resetTrigger && !resetTrigger.contains(e.target) && !resetDropdown.classList.contains("hidden")) {
+        if (
+          resetDropdown &&
+          resetTrigger &&
+          !resetTrigger.contains(e.target) &&
+          !resetDropdown.classList.contains("hidden")
+        ) {
           resetDropdown.classList.add("hidden");
-           document.getElementById("resetDropdownArrow").classList.remove("rotate-180");
+          document
+            .getElementById("resetDropdownArrow")
+            .classList.remove("rotate-180");
         }
       });
 
@@ -795,7 +1052,7 @@
         const dropdown = document.getElementById("resetOptions");
         const arrow = document.getElementById("resetDropdownArrow");
         dropdown.classList.toggle("hidden");
-        
+
         if (!dropdown.classList.contains("hidden")) {
           arrow.classList.add("rotate-180");
         } else {
@@ -806,34 +1063,66 @@
       function selectResetOption(value, text) {
         document.getElementById("doRest").value = value;
         document.getElementById("selectedResetText").textContent = text;
-        
+
         // Hide dropdown
         document.getElementById("resetOptions").classList.add("hidden");
-        document.getElementById("resetDropdownArrow").classList.remove("rotate-180");
-        
+        document
+          .getElementById("resetDropdownArrow")
+          .classList.remove("rotate-180");
+
         // Update styling
         const options = document.getElementById("resetOptions").children;
-        Array.from(options).forEach(opt => {
+        Array.from(options).forEach((opt) => {
           if (opt.getAttribute("onclick").includes(value)) {
             opt.classList.add("bg-purple-50");
-            opt.querySelector(".w-1").classList.replace("bg-transparent", "bg-purple-500");
+            opt
+              .querySelector(".w-1")
+              .classList.replace("bg-transparent", "bg-purple-500");
           } else {
             opt.classList.remove("bg-purple-50");
-             opt.querySelector(".w-1").classList.replace("bg-purple-500", "bg-transparent");
+            opt
+              .querySelector(".w-1")
+              .classList.replace("bg-purple-500", "bg-transparent");
           }
         });
       }
 
-
       window.addEventListener("DOMContentLoaded", () => {
-        // Initial setup if needed
-        const currentMethod = document.getElementById("chunkingMethod").value;
-        // Pre-select logic would go here if we were dynamic
+        // Initial setup
+        const idInput = document.getElementById("globalId");
+        if (idInput) {
+          idInput.addEventListener("input", () => {
+            const id = idInput.value.trim();
+            if (id) {
+              checkConnection();
+            } else {
+              updateWebSocketStatus(false);
+            }
+          });
+          if (idInput.value.trim()) checkConnection();
+        }
       });
+
+      async function checkConnection() {
+        if (isProcessingActive) return;
+        const id = getGlobalId();
+        if (!id) return;
+
+        try {
+          const res = await fetch(`${apiBase}api/v1/nlp/index/info/${id}`);
+          if (res.ok) {
+            updateWebSocketStatus(true, "Ready");
+          } else {
+            updateWebSocketStatus(false, "Not Found");
+          }
+        } catch (e) {
+          updateWebSocketStatus(false, "Offline");
+        }
+      }
 
       async function loadChunkingMethods() {
         try {
-          const res = await fetch(`${apiBase}/api/v1/data/chunking-methods`);
+          const res = await fetch(`${apiBase}api/v1/data/chunking-methods`);
           if (res.ok) {
             const data = await res.json();
             chunkingMethodDescriptions = data.descriptions;
@@ -889,39 +1178,44 @@
       // ========================================
       // WebSocket Connection Management
       // ========================================
-      
-      function updateWebSocketStatus(connected) {
+
+      function updateWebSocketStatus(connected, message = null) {
         const dot = document.getElementById("wsStatusDot");
         const text = document.getElementById("wsStatusText");
-        
+
         if (connected) {
           dot.classList.remove("bg-gray-400", "bg-red-400");
           dot.classList.add("bg-green-400");
-          text.textContent = "Connected";
+          text.textContent = message || "Connected";
           text.classList.remove("text-gray-500", "text-red-500");
           text.classList.add("text-green-600");
         } else {
           dot.classList.remove("bg-green-400", "bg-gray-400");
           dot.classList.add("bg-red-400");
-          text.textContent = "Disconnected";
+          text.textContent = message || "Disconnected";
           text.classList.remove("text-green-600", "text-gray-500");
           text.classList.add("text-red-500");
         }
       }
 
       function connectWebSocket(projectId, workflowId = null) {
-        if (progressWebSocket && progressWebSocket.readyState === WebSocket.OPEN) {
+        if (
+          progressWebSocket &&
+          progressWebSocket.readyState === WebSocket.OPEN
+        ) {
           // If already connected, just subscribe to the new workflow
           if (workflowId) {
-            progressWebSocket.send(JSON.stringify({
-              action: "subscribe",
-              workflow_id: workflowId
-            }));
+            progressWebSocket.send(
+              JSON.stringify({
+                action: "subscribe",
+                workflow_id: workflowId,
+              })
+            );
           }
           return;
         }
 
-        let wsUrl = `${wsBase}/ws/progress/${projectId}`;
+        let wsUrl = `${wsBase}ws/progress/${projectId}`;
         if (workflowId) {
           wsUrl += `?workflow_id=${workflowId}`;
         }
@@ -941,18 +1235,29 @@
 
         progressWebSocket.onclose = () => {
           console.log("WebSocket disconnected");
-          updateWebSocketStatus(false);
-          
-          // Attempt to reconnect if processing is still active
-          if (isProcessingActive && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-            reconnectAttempts++;
-            console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
-            setTimeout(() => {
-              const id = getGlobalId();
-              if (id) {
-                connectWebSocket(id, currentWorkflowId);
-              }
-            }, 2000 * reconnectAttempts);
+
+          // Only show as disconnected if we were actively processing and it failed/closed early
+          if (isProcessingActive) {
+            updateWebSocketStatus(false);
+
+            // Attempt to reconnect if processing is still active
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+              reconnectAttempts++;
+              console.log(
+                `Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
+              );
+              setTimeout(() => {
+                const id = getGlobalId();
+                if (id) {
+                  connectWebSocket(id, currentWorkflowId);
+                }
+              }, 2000 * reconnectAttempts);
+            }
+          } else {
+            // If processing is not active, it means we either finished or haven't started.
+            // In case of success, we want to stay "Connected" (Ready).
+            // We only show disconnected if we explicitly closed it or it timed out without success.
+            console.log("WebSocket closed normally.");
           }
         };
 
@@ -1003,11 +1308,11 @@
 
         // Update status text based on status
         const statusMap = {
-          "PENDING": "Initializing...",
-          "CHUNKING": "Chunking Files",
-          "EMBEDDING": "Creating Embeddings",
-          "SUCCESS": "Complete!",
-          "FAILURE": "Failed"
+          PENDING: "Initializing...",
+          CHUNKING: "Chunking Files",
+          EMBEDDING: "Creating Embeddings",
+          SUCCESS: "Complete!",
+          FAILURE: "Failed",
         };
         statusText.textContent = statusMap[progress.status] || progress.status;
 
@@ -1015,36 +1320,52 @@
         messageText.textContent = progress.message || "Processing...";
 
         // Update step info
-        stepText.textContent = `Step ${progress.current_step_number || 0}/${progress.total_steps || 2}`;
+        stepText.textContent = `Step ${progress.current_step_number || 0}/${
+          progress.total_steps || 2
+        }`;
 
         // Handle completion
         if (progress.status === "SUCCESS") {
           spinner.classList.add("hidden");
           bar.classList.remove("shimmer-effect");
           bar.classList.add("bg-green-500");
-          container.querySelector(".bg-purple-50").classList.remove("bg-purple-50", "border-purple-200");
-          container.querySelector("div").classList.add("bg-green-50", "border-green-200");
-          
+          container
+            .querySelector(".bg-purple-50")
+            .classList.remove("bg-purple-50", "border-purple-200");
+          container
+            .querySelector("div")
+            .classList.add("bg-green-50", "border-green-200");
+
           setEmbeddingState(false);
           isProcessingActive = false;
-          
-          notify("processResult", `
+          updateWebSocketStatus(true, "Ready");
+
+          notify(
+            "processResult",
+            `
             <div class="flex items-center gap-2">
               <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
               <span>Processing complete! Your data is ready for querying.</span>
             </div>
-          `, "success");
+          `,
+            "success"
+          );
         } else if (progress.status === "FAILURE") {
           spinner.classList.add("hidden");
           bar.classList.remove("shimmer-effect");
           bar.classList.add("bg-red-500");
-          
+
           setEmbeddingState(false);
           isProcessingActive = false;
-          
-          notify("processResult", `Failed: ${progress.error_message || "Unknown error"}`, "error");
+          updateWebSocketStatus(false, "Failed");
+
+          notify(
+            "processResult",
+            `Failed: ${progress.error_message || "Unknown error"}`,
+            "error"
+          );
         }
       }
 
@@ -1058,26 +1379,28 @@
         const sendButton = document.getElementById("chatSendButton");
         const processButton = document.getElementById("processButton");
         const chatMessages = document.getElementById("chatMessages");
-        
+
         if (inProgress) {
           // Disable chat input
           chatInput.disabled = true;
-          chatInput.placeholder = "Please wait... Processing in progress. Chat will be available once complete.";
+          chatInput.placeholder =
+            "Please wait... Processing in progress. Chat will be available once complete.";
           chatInput.classList.add("bg-gray-200", "cursor-not-allowed");
           sendButton.disabled = true;
           sendButton.classList.add("opacity-50", "cursor-not-allowed");
-          
+
           // Disable process button
           processButton.disabled = true;
           processButton.classList.add("opacity-50", "cursor-not-allowed");
           processButton.textContent = "Processing...";
-          
+
           // Add processing status banner to chat
           const existingBanner = document.getElementById("processingBanner");
           if (!existingBanner) {
             const banner = document.createElement("div");
             banner.id = "processingBanner";
-            banner.className = "bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3";
+            banner.className =
+              "bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3";
             banner.innerHTML = `
               <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1096,16 +1419,17 @@
         } else {
           // Enable chat input
           chatInput.disabled = false;
-          chatInput.placeholder = "Ask about your logs... (e.g., 'What are the most common errors?')";
+          chatInput.placeholder =
+            "Ask about your logs... (e.g., 'What are the most common errors?')";
           chatInput.classList.remove("bg-gray-200", "cursor-not-allowed");
           sendButton.disabled = false;
           sendButton.classList.remove("opacity-50", "cursor-not-allowed");
-          
+
           // Enable process button
           processButton.disabled = false;
           processButton.classList.remove("opacity-50", "cursor-not-allowed");
           processButton.textContent = "Start Processing";
-          
+
           // Remove processing banner
           const existingBanner = document.getElementById("processingBanner");
           if (existingBanner) {
@@ -1135,7 +1459,7 @@
         try {
           const formData = new FormData();
           formData.append("file", fileInput.files[0]);
-          const res = await fetch(`${apiBase}/api/v1/data/upload/${id}`, {
+          const res = await fetch(`${apiBase}api/v1/data/upload/${id}`, {
             method: "POST",
             body: formData,
           });
@@ -1174,6 +1498,7 @@
         // Set processing state
         setEmbeddingState(true);
         isProcessingActive = true;
+        updateWebSocketStatus(true, "Connecting...");
 
         // Reset progress UI
         resetProgressUI();
@@ -1190,9 +1515,9 @@
             file_id: lastFileId,
             chunking_method: document.getElementById("chunkingMethod").value,
           };
-          
+
           const res = await fetch(
-            `${apiBase}/api/v1/data/process-and-push/${id}`,
+            `${apiBase}api/v1/data/process-and-push/${id}`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1203,16 +1528,19 @@
 
           if (res.ok) {
             currentWorkflowId = data.workflow_task_id;
-            
+
             // Connect WebSocket for real-time updates
             connectWebSocket(id, currentWorkflowId);
-            
+
             // Start polling as fallback
             startProgressPolling(currentWorkflowId);
-            
+
             notify(
               "processResult",
-              `Processing started (Workflow: ${currentWorkflowId.substring(0, 8)}...)`,
+              `Processing started (Workflow: ${currentWorkflowId.substring(
+                0,
+                8
+              )}...)`,
               "info"
             );
           } else {
@@ -1239,17 +1567,19 @@
         const container = document.getElementById("progressContainer");
         const bar = document.getElementById("progressBar");
         const spinner = document.getElementById("progressSpinner");
-        
+
         bar.style.width = "0%";
         bar.classList.remove("bg-green-500", "bg-red-500");
         bar.classList.add("bg-purple-600", "shimmer-effect");
         spinner.classList.remove("hidden");
-        
+
         document.getElementById("progressPercentage").textContent = "0%";
-        document.getElementById("progressStatus").textContent = "Initializing...";
-        document.getElementById("progressMessage").textContent = "Starting workflow...";
+        document.getElementById("progressStatus").textContent =
+          "Initializing...";
+        document.getElementById("progressMessage").textContent =
+          "Starting workflow...";
         document.getElementById("progressStep").textContent = "Step 0/2";
-        
+
         // Reset container colors
         const containerDiv = container.querySelector("div");
         containerDiv.classList.remove("bg-green-50", "border-green-200");
@@ -1258,25 +1588,28 @@
 
       // Fallback polling for progress (in case WebSocket fails)
       let pollingInterval = null;
-      
+
       function startProgressPolling(workflowId) {
         // Clear any existing polling
         if (pollingInterval) {
           clearInterval(pollingInterval);
         }
-        
+
         pollingInterval = setInterval(async () => {
           try {
             const res = await fetch(
-              `${apiBase}/api/v1/data/workflow-progress/${workflowId}`
+              `${apiBase}api/v1/data/workflow-progress/${workflowId}`
             );
-            
+
             if (res.ok) {
               const progress = await res.json();
               updateProgressUI(progress);
-              
+
               // Stop polling when complete
-              if (progress.status === "SUCCESS" || progress.status === "FAILURE") {
+              if (
+                progress.status === "SUCCESS" ||
+                progress.status === "FAILURE"
+              ) {
                 clearInterval(pollingInterval);
                 pollingInterval = null;
               }
@@ -1294,7 +1627,7 @@
           '<div class="text-sm text-gray-500">Loading index information...</div>';
 
         try {
-          const res = await fetch(`${apiBase}/api/v1/nlp/index/info/${id}`);
+          const res = await fetch(`${apiBase}api/v1/nlp/index/info/${id}`);
           const data = await res.json();
           if (res.ok && data.collection_info) {
             const table = data.collection_info.table_info;
@@ -1353,7 +1686,7 @@
           '<div class="text-sm text-gray-600 flex items-center gap-2"><div class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>Searching logs...</div>';
 
         try {
-          const res = await fetch(`${apiBase}/api/v1/nlp/index/search/${id}`, {
+          const res = await fetch(`${apiBase}api/v1/nlp/index/search/${id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1471,7 +1804,10 @@
 
         // Prevent chat while processing is in progress
         if (isEmbeddingInProgress) {
-          appendChatMessage("Please wait - processing is still in progress. You can ask questions once the processing is complete.", false);
+          appendChatMessage(
+            "Please wait - processing is still in progress. You can ask questions once the processing is complete.",
+            false
+          );
           return;
         }
 
@@ -1503,7 +1839,7 @@
         chatArea.scrollTop = chatArea.scrollHeight;
 
         try {
-          const res = await fetch(`${apiBase}/api/v1/nlp/index/answer/${id}`, {
+          const res = await fetch(`${apiBase}api/v1/nlp/index/answer/${id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1542,60 +1878,164 @@
       // Voice Recognition Logic
       let recognition = null;
       let isRecording = false;
+      let SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
 
       function toggleVoiceInput() {
-        if (!('webkitSpeechRecognition' in window)) {
-          alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
+        // Check if Speech Recognition API is available
+        if (!SpeechRecognition) {
+          alert(
+            "Voice input is not supported in this browser. Please use Chrome, Edge, or Safari."
+          );
           return;
         }
 
-        if (isRecording) {
-          if (recognition) recognition.stop();
+        // If already recording, stop it
+        if (isRecording && recognition) {
+          try {
+            recognition.stop();
+            isRecording = false;
+            updateVoiceButtonState(false);
+          } catch (e) {
+            console.error("Error stopping recognition:", e);
+          }
           return;
         }
 
+        // Start new recognition
+        startVoiceRecognition();
+      }
+
+      function startVoiceRecognition() {
         try {
-          recognition = new webkitSpeechRecognition();
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.lang = 'en-US';
+          // Create new recognition instance
+          recognition = new SpeechRecognition();
 
-          recognition.onstart = function() {
+          // Configuration
+          recognition.continuous = false; // Stop after user stops speaking
+          recognition.interimResults = true; // Show interim results
+          recognition.lang = "en-US"; // Language
+          recognition.maxAlternatives = 1; // Only one alternative per result
+
+          // Event handlers
+          recognition.onstart = function () {
             isRecording = true;
             updateVoiceButtonState(true);
+
+            // Initialize base value for tracking user input before voice recognition
+            const input = document.getElementById("answerText");
+            if (input) {
+              input.dataset.baseValue = input.value.trim();
+            }
+
+            console.log("Voice recognition started");
           };
 
-          recognition.onend = function() {
-            isRecording = false;
-            updateVoiceButtonState(false);
-          };
+          recognition.onresult = function (event) {
+            let interimTranscript = "";
+            let finalTranscript = "";
 
-          recognition.onresult = function(event) {
-            let finalTranscript = '';
+            // Process all results
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const transcript = event.results[i][0].transcript;
+
               if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                finalTranscript += transcript + " ";
+              } else {
+                interimTranscript += transcript;
               }
             }
-            
+
+            const input = document.getElementById("answerText");
+
+            // Get the base value (value before any interim results were added)
+            // Initialize baseValue on first recognition result
+            if (!input.dataset.baseValue) {
+              input.dataset.baseValue = input.value.trim();
+            }
+            const baseValue = input.dataset.baseValue;
+
+            // Update input with interim results for real-time feedback
+            if (interimTranscript) {
+              input.value =
+                baseValue + (baseValue ? " " : "") + interimTranscript;
+            }
+
+            // Add final transcript when available
             if (finalTranscript) {
-              const input = document.getElementById("answerText");
-              // Append with space if needed
-              const prefix = input.value && !input.value.endsWith(' ') ? ' ' : '';
-              input.value += prefix + finalTranscript;
+              const finalText = finalTranscript.trim();
+              // Update base value with final transcript
+              const newBaseValue =
+                baseValue + (baseValue ? " " : "") + finalText;
+              input.value = newBaseValue;
+              input.dataset.baseValue = newBaseValue;
+
               input.focus();
+              // Move cursor to end
+              input.setSelectionRange(input.value.length, input.value.length);
             }
           };
 
-          recognition.onerror = function(event) {
-            console.error("Speech recognition error", event.error);
+          recognition.onerror = function (event) {
+            console.error("Speech recognition error:", event.error);
             isRecording = false;
             updateVoiceButtonState(false);
+
+            // User-friendly error messages
+            let errorMessage = "Voice recognition error: ";
+            switch (event.error) {
+              case "no-speech":
+                errorMessage = "No speech detected. Please try again.";
+                break;
+              case "audio-capture":
+                errorMessage =
+                  "Microphone not found. Please check your microphone settings.";
+                break;
+              case "not-allowed":
+                errorMessage =
+                  "Microphone permission denied. Please allow microphone access and try again.";
+                break;
+              case "network":
+                errorMessage = "Network error. Please check your connection.";
+                break;
+              case "aborted":
+                // User stopped, no error message needed
+                return;
+              default:
+                errorMessage = `Voice recognition error: ${event.error}`;
+            }
+
+            // Show error notification
+            const input = document.getElementById("answerText");
+            const originalPlaceholder = input.placeholder;
+            input.placeholder = errorMessage;
+            input.classList.add("border-red-300", "bg-red-50");
+
+            setTimeout(() => {
+              input.placeholder = originalPlaceholder;
+              input.classList.remove("border-red-300", "bg-red-50");
+            }, 3000);
           };
 
+          recognition.onend = function () {
+            isRecording = false;
+            updateVoiceButtonState(false);
+            console.log("Voice recognition ended");
+
+            // Clean up recognition object
+            recognition = null;
+          };
+
+          // Start recognition
           recognition.start();
         } catch (e) {
-          console.error("Failed to start speech recognition", e);
+          console.error("Failed to start speech recognition:", e);
+          isRecording = false;
+          updateVoiceButtonState(false);
+
+          alert(
+            "Failed to start voice recognition. Please check your browser permissions and try again."
+          );
         }
       }
 
@@ -1604,19 +2044,36 @@
         const icon = document.getElementById("micIcon");
         const wave = document.getElementById("micWave");
 
+        if (!btn || !icon || !wave) {
+          console.error("Voice button elements not found");
+          return;
+        }
+
         if (active) {
           btn.classList.add("bg-purple-100", "border-purple-200");
           btn.classList.remove("bg-gray-100", "border-gray-200");
+          btn.title = "Click to stop recording";
           icon.classList.add("hidden");
           wave.classList.remove("hidden");
         } else {
           btn.classList.remove("bg-purple-100", "border-purple-200");
           btn.classList.add("bg-gray-100", "border-gray-200");
+          btn.title = "Click to start voice input";
           icon.classList.remove("hidden");
           wave.classList.add("hidden");
         }
-        }
+      }
 
+      // Clean up on page unload
+      window.addEventListener("beforeunload", function () {
+        if (recognition && isRecording) {
+          try {
+            recognition.stop();
+          } catch (e) {
+            console.error("Error cleaning up recognition:", e);
+          }
+        }
+      });
 
       // ========================================
       // Dashboard & EDA Logic
@@ -1624,129 +2081,173 @@
       let charts = {};
 
       async function loadDashboard(projectId, fileId) {
-          if (!projectId || !fileId) {
-              console.error("Missing projectId or fileId", {projectId, fileId});
-              return;
-          }
+        if (!projectId || !fileId) {
+          console.error("Missing projectId or fileId", { projectId, fileId });
+          return;
+        }
 
-          const fetchUrl = `${apiBase}/api/v1/data/eda/${projectId}/${fileId}`;
-          console.log("Fetching dashboard data from:", fetchUrl);
+        const fetchUrl = `${apiBase}api/v1/data/eda/${projectId}/${fileId}`;
+        console.log("Fetching dashboard data from:", fetchUrl);
 
-          // Switch to dashboard immediately to show activity
-          switchTab('dashboard');
-          
-          // Show loaders
-          const chartLoaders = document.querySelectorAll('.chart-loader');
-          chartLoaders.forEach(l => l.classList.remove('hidden'));
+        // Switch to dashboard immediately to show activity
+        switchTab("dashboard");
 
-          // Show loading skeletons for metrics
-          const metrics = ["stat-total", "stat-visitors", "stat-bandwidth", "stat-error"];
-          metrics.forEach(id => {
-             document.getElementById(id).innerHTML = `
+        // Show loaders
+        const chartLoaders = document.querySelectorAll(".chart-loader");
+        chartLoaders.forEach((l) => l.classList.remove("hidden"));
+
+        // Show loading skeletons for metrics
+        const metrics = [
+          "stat-total",
+          "stat-visitors",
+          "stat-bandwidth",
+          "stat-error",
+        ];
+        metrics.forEach((id) => {
+          document.getElementById(id).innerHTML = `
                 <div class="animate-pulse flex space-x-4">
                   <div class="h-8 bg-purple-100 rounded w-24"></div>
                 </div>`;
-          });
+        });
 
-          try {
-              const res = await fetch(fetchUrl);
-              
-              if (!res.ok) {
-                  const text = await res.text();
-                  throw new Error(`Server error (${res.status}): ${text}`);
-              }
+        try {
+          const res = await fetch(fetchUrl);
 
-              const data = await res.json();
-              
-              if (data.error) {
-                  notify("processResult", `Dashboard Error: ${data.error}`, "error");
-                  const dashboard = document.getElementById("panel-dashboard");
-                  
-                  // Remove old error if any
-                  const oldError = dashboard.querySelector(".bg-red-50");
-                  if(oldError) oldError.remove();
-                  
-                  const errorDiv = document.createElement("div");
-                  errorDiv.className = "bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4";
-                  errorDiv.textContent = `Could not analyze logs: ${data.error}`;
-                  dashboard.prepend(errorDiv);
-                  
-                  // Reset metrics to hyphen on error
-                  metrics.forEach(id => document.getElementById(id).textContent = "-");
-                  return; 
-              }
-              
-              // Remove old error if success
-              const dashboard = document.getElementById("panel-dashboard");
-              const oldError = dashboard.querySelector(".bg-red-50");
-              if(oldError) oldError.remove();
-              
-              // Update Metrics
-              document.getElementById("stat-total").textContent = data.metrics.total_requests.toLocaleString();
-              document.getElementById("stat-visitors").textContent = data.metrics.unique_visitors.toLocaleString();
-              document.getElementById("stat-bandwidth").textContent = data.metrics.total_bandwidth_mb + " MB";
-              document.getElementById("stat-error").textContent = data.metrics.error_rate + "%";
-
-              // Render Charts
-              renderChart('chartTraffic', 'line', 'Traffic Over Time', data.charts.traffic_over_time.labels, data.charts.traffic_over_time.values);
-              renderChart('chartStatus', 'doughnut', 'Status Codes', Object.keys(data.charts.status_counts), Object.values(data.charts.status_counts));
-              renderChart('chartTopIPs', 'bar', 'Top IPs', Object.keys(data.charts.top_ips), Object.values(data.charts.top_ips));
-              renderChart('chartTopURLs', 'bar', 'Top URLs', Object.keys(data.charts.top_urls), Object.values(data.charts.top_urls));
-              
-          } catch (e) {
-              console.error("Failed to load dashboard", e);
-              notify("processResult", `Dashboard failed to load: ${e.message}`, "error");
-              // Reset metrics on catch
-              metrics.forEach(id => document.getElementById(id).textContent = "-");
-          } finally {
-              // Hide loaders even if error
-              chartLoaders.forEach(l => l.classList.add('hidden'));
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Server error (${res.status}): ${text}`);
           }
+
+          const data = await res.json();
+
+          if (data.error) {
+            notify("processResult", `Dashboard Error: ${data.error}`, "error");
+            const dashboard = document.getElementById("panel-dashboard");
+
+            // Remove old error if any
+            const oldError = dashboard.querySelector(".bg-red-50");
+            if (oldError) oldError.remove();
+
+            const errorDiv = document.createElement("div");
+            errorDiv.className =
+              "bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4";
+            errorDiv.textContent = `Could not analyze logs: ${data.error}`;
+            dashboard.prepend(errorDiv);
+
+            // Reset metrics to hyphen on error
+            metrics.forEach(
+              (id) => (document.getElementById(id).textContent = "-")
+            );
+            return;
+          }
+
+          // Remove old error if success
+          const dashboard = document.getElementById("panel-dashboard");
+          const oldError = dashboard.querySelector(".bg-red-50");
+          if (oldError) oldError.remove();
+
+          // Update Metrics
+          document.getElementById("stat-total").textContent =
+            data.metrics.total_requests.toLocaleString();
+          document.getElementById("stat-visitors").textContent =
+            data.metrics.unique_visitors.toLocaleString();
+          document.getElementById("stat-bandwidth").textContent =
+            data.metrics.total_bandwidth_mb + " MB";
+          document.getElementById("stat-error").textContent =
+            data.metrics.error_rate + "%";
+
+          // Render Charts
+          renderChart(
+            "chartTraffic",
+            "line",
+            "Traffic Over Time",
+            data.charts.traffic_over_time.labels,
+            data.charts.traffic_over_time.values
+          );
+          renderChart(
+            "chartStatus",
+            "doughnut",
+            "Status Codes",
+            Object.keys(data.charts.status_counts),
+            Object.values(data.charts.status_counts)
+          );
+          renderChart(
+            "chartTopIPs",
+            "bar",
+            "Top IPs",
+            Object.keys(data.charts.top_ips),
+            Object.values(data.charts.top_ips)
+          );
+          renderChart(
+            "chartTopURLs",
+            "bar",
+            "Top URLs",
+            Object.keys(data.charts.top_urls),
+            Object.values(data.charts.top_urls)
+          );
+        } catch (e) {
+          console.error("Failed to load dashboard", e);
+          notify(
+            "processResult",
+            `Dashboard failed to load: ${e.message}`,
+            "error"
+          );
+          // Reset metrics on catch
+          metrics.forEach(
+            (id) => (document.getElementById(id).textContent = "-")
+          );
+        } finally {
+          // Hide loaders even if error
+          chartLoaders.forEach((l) => l.classList.add("hidden"));
+        }
       }
 
       function renderChart(canvasId, type, label, labels, data) {
-          const ctx = document.getElementById(canvasId).getContext('2d');
-          
-          if (charts[canvasId]) {
-              charts[canvasId].destroy();
-          }
-          
-          const colors = [
-              'rgba(147, 51, 234, 0.6)',
-              'rgba(59, 130, 246, 0.6)', 
-              'rgba(16, 185, 129, 0.6)',
-              'rgba(239, 68, 68, 0.6)',
-              'rgba(245, 158, 11, 0.6)',
-              'rgba(99, 102, 241, 0.6)'
-          ];
+        const ctx = document.getElementById(canvasId).getContext("2d");
 
-          charts[canvasId] = new Chart(ctx, {
-              type: type,
-              data: {
-                  labels: labels,
-                  datasets: [{
-                      label: label,
-                      data: data,
-                      backgroundColor: type === 'line' ? 'rgba(147, 51, 234, 0.1)' : colors,
-                      borderColor: 'rgba(147, 51, 234, 1)',
-                      borderWidth: 1,
-                      fill: type === 'line'
-                  }]
+        if (charts[canvasId]) {
+          charts[canvasId].destroy();
+        }
+
+        const colors = [
+          "rgba(147, 51, 234, 0.6)",
+          "rgba(59, 130, 246, 0.6)",
+          "rgba(16, 185, 129, 0.6)",
+          "rgba(239, 68, 68, 0.6)",
+          "rgba(245, 158, 11, 0.6)",
+          "rgba(99, 102, 241, 0.6)",
+        ];
+
+        charts[canvasId] = new Chart(ctx, {
+          type: type,
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: label,
+                data: data,
+                backgroundColor:
+                  type === "line" ? "rgba(147, 51, 234, 0.1)" : colors,
+                borderColor: "rgba(147, 51, 234, 1)",
+                borderWidth: 1,
+                fill: type === "line",
               },
-              options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    title: {
-                        display: true,
-                        text: label
-                    },
-                    legend: {
-                        display: type === 'doughnut'
-                    }
-                  }
-              }
-          });
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: label,
+              },
+              legend: {
+                display: type === "doughnut",
+              },
+            },
+          },
+        });
       }
     </script>
   </body>

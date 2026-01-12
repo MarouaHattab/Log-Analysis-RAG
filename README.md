@@ -54,8 +54,101 @@ Everything begins when the user submits log files (application logs, server logs
 
 ### Architecture & Workflow Diagrams
 
-- **End-to-end workflow**  
-  ![System Workflow](img/Diagram-Flow.png)
+- **End-to-end workflow**
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize':'15px', 'fontFamily':'arial'}}}%%
+
+graph TB
+    %% Styling
+    classDef userStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:3px,color:#1e1b4b
+    classDef apiStyle fill:#4ade80,stroke:#22c55e,stroke-width:3px,color:#064e3b
+    classDef brokerStyle fill:#fb923c,stroke:#f97316,stroke-width:3px,color:#7c2d12
+    classDef queueStyle fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#78350f
+    classDef workerStyle fill:#fde68a,stroke:#f59e0b,stroke-width:3px,color:#78350f
+    classDef aiStyle fill:#60a5fa,stroke:#3b82f6,stroke-width:3px,color:#1e3a8a
+    classDef dbStyle fill:#34d399,stroke:#10b981,stroke-width:3px,color:#064e3b
+    classDef monitorStyle fill:#fca5a5,stroke:#ef4444,stroke-width:3px,color:#7f1d1d
+    classDef llmStyle fill:#c4b5fd,stroke:#a855f7,stroke-width:3px,color:#581c87
+
+    %% Main Components
+    User["👤 User<br/>File Upload & Queries"]
+    FastAPI["⚡ FastAPI<br/>REST API"]
+    RabbitMQ["🐰 RabbitMQ<br/>Message Broker"]
+
+    %% Celery Task Queue
+    CeleryQueue["📋 Celery<br/>Task Queue"]
+
+    %% Celery Workers Processing Pipeline
+    subgraph CeleryWorkers["🔧 Celery Workers - File Processing & Indexing Tasks"]
+        direction TB
+        Chunking["📄 Chunking<br/>Split logs into chunks"]
+        Embedding["🧮 Embedding<br/>nomic-embed-text:latest"]
+        Indexing["📊 Indexing<br/>Prepare vectors"]
+
+        Chunking --> Embedding --> Indexing
+    end
+
+    %% Storage Layer
+    VectorDB["🗄️ Vector Database<br/>Qdrant / PgVector<br/>Embeddings Storage"]
+    PostgreSQL["🐘 PostgreSQL<br/>Database<br/>Metadata & Logs"]
+    Redis["⚡ Redis<br/>Database<br/>Task State & Cache"]
+
+    %% AI/ML Layer
+    Ollama["🤖 Ollama LLM<br/>qwen2.5-coder:7b<br/>Analysis Engine"]
+
+    Response["💬 LLM Response<br/>Root Cause Analysis"]
+
+    %% Monitoring
+    subgraph Monitoring["📊 Monitoring"]
+        direction LR
+        Prometheus["🔥 Prometheus<br/>Monitoring"]
+        Grafana["📈 Grafana<br/>Monitoring"]
+    end
+
+    Flower["🌸 Flower<br/>Celery Monitoring"]
+
+    %% ========== INGESTION FLOW (Solid Lines) ==========
+    User -->|"1. Upload<br/>Log Files"| FastAPI
+    FastAPI -->|"2. Send<br/>Message"| RabbitMQ
+    RabbitMQ -->|"3. Route to"| CeleryQueue
+    CeleryQueue -->|"4. Assign<br/>Task"| CeleryWorkers
+
+    Indexing -->|"5. Store<br/>Embeddings"| VectorDB
+    Indexing -->|"6. Save<br/>Metadata"| PostgreSQL
+    Indexing -->|"7. Cache<br/>Results"| Redis
+
+    %% ========== QUERY FLOW (Dashed Lines) ==========
+    User -.->|"A. Submit<br/>Query"| FastAPI
+    FastAPI -.->|"B. Semantic<br/>Search"| VectorDB
+    FastAPI -.->|"C. Fetch<br/>Metadata"| PostgreSQL
+    FastAPI -.->|"D. Get<br/>Cache"| Redis
+    VectorDB -.->|"E. Relevant<br/>Chunks"| Ollama
+    Ollama -.->|"F. Generated<br/>Insights"| Response
+    Response -.->|"G. Display<br/>Answer"| User
+
+    %% ========== MONITORING CONNECTIONS (Dotted Lines) ==========
+    Flower -.-|monitor| CeleryQueue
+    Flower -.-|monitor| CeleryWorkers
+    Grafana -.-|metrics| FastAPI
+    Grafana -.-|metrics| PostgreSQL
+    Grafana -.-|metrics| Redis
+    Grafana -.-|metrics| VectorDB
+    Prometheus -.-|collect| FastAPI
+    Prometheus -.-|collect| CeleryWorkers
+
+    %% Apply Styles
+    class User userStyle
+    class FastAPI apiStyle
+    class RabbitMQ brokerStyle
+    class CeleryQueue queueStyle
+    class CeleryWorkers,Chunking,Embedding,Indexing workerStyle
+    class VectorDB,PostgreSQL dbStyle
+    class Redis brokerStyle
+    class Ollama aiStyle
+    class Response llmStyle
+    class Flower,Prometheus,Grafana monitorStyle
+```
 
 - **FastAPI + Nginx + Monitoring**  
   ![FastAPI & Monitoring](img/grafana-fastapi.png)
@@ -128,6 +221,17 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Node Exporter** – system metrics
 - **Postgres Exporter** – database metrics
 
+### Frontend & Visualization
+
+- **Chart.js** – Interactive data visualization library used in the web interface (`src/templates/index.html`)
+  - **Traffic Over Time Chart** – Line chart displaying request patterns over time periods
+  - **Status Codes Distribution** – Doughnut chart showing HTTP status code breakdown (2xx, 3xx, 4xx, 5xx)
+  - **Top IPs Chart** – Bar chart displaying most active IP addresses
+  - **Top URLs Chart** – Bar chart showing most frequently accessed endpoints
+  - **Real-time Dashboard** – Metrics cards displaying total requests, unique visitors, bandwidth, and error rates
+  - Charts are dynamically rendered using Chart.js CDN and updated via REST API calls to the EDA endpoint
+  - Responsive design with loading states and error handling
+
 ### Testing & Development
 
 - **Postman** – API testing
@@ -153,6 +257,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
   - **Grafana** – metrics visualization and dashboards.
   - **Node Exporter** – system‑level metrics.
   - **Postgres Exporter** – database metrics.
+- **Chart.js**: Frontend visualization library used to render interactive charts for log analysis dashboard, including traffic patterns, status code distributions, top IPs, and top URLs.
 - **Postman**: Used for API testing and endpoint validation during development.
 - **Git & GitHub**: Version control and source code management.
 
@@ -162,39 +267,101 @@ This system includes multiple log‑specific chunking strategies for RAG, evalua
 
 ### Chunking Methods: Technical Overview
 
-- **Method 1 – `log_semantic_sliding`**
+The system provides **7 advanced chunking methods** optimized for log analysis and RAG applications. Each method is designed to handle different query types and analysis scenarios.
 
-  - **Logic**: Sliding window over sequential log entries with 20% overlap to preserve context across chunk boundaries.
-  - **Config**: `chunk_size = 2500` characters, `overlap = 20%`, average 8–15 log entries per chunk.
-  - **Pros**: Strong temporal/context preservation, good for multi‑entry analysis and general RAG queries.
-  - **Cons**: Slight storage overhead due to overlap, may mix unrelated entries for very focused queries.
+#### Method 1 – `log_hybrid_adaptive` ⭐ (Recommended Default)
 
-- **Method 2 – `log_error_block`**
+**Best for**: General-purpose RAG systems that need to answer diverse queries about errors, performance, user behavior, and temporal patterns.
 
-  - **Logic**: Detects error status codes (400, 401, 403, 404, 405, 500–504) and groups them with nearby non‑error context into blocks.
-  - **Config**: `chunk_size = 2500`, `overlap = 0`.
-  - **Pros**: Excellent for error analysis, debugging, and security incident investigation.
-  - **Cons**: Less effective for non‑error queries; can fragment successful traffic patterns.
+- **Logic**: Combines multiple strategies intelligently:
+  - Time-window awareness (keeps logs from same time period together)
+  - Error-block awareness (never splits error contexts)
+  - Component awareness (groups requests from same IP when beneficial)
+  - Semantic sliding (maintains overlap for context)
+  - Status-code awareness (groups similar HTTP responses)
+- **Strategy**:
+  - Primary grouping: Time windows (hourly)
+  - Secondary grouping: Keep errors with their context
+  - Tertiary grouping: Consider IP/component patterns
+  - Always maintain overlap for RAG context
+- **Config**: `chunk_size = 100` (configurable), `overlap_size = 20` (configurable)
+- **Metadata**: Includes chunk_index, entries count, time_window, has_errors, error_count, primary_ip, status_category, chunk_reasons
+- **Pros**: Best balance across all query types, intelligent boundary detection, preserves context
+- **Cons**: More complex logic, slightly higher processing overhead
 
-- **Method 3 – `log_time_window`**
+#### Method 2 – `log_hybrid_intelligent`
 
-  - **Logic**: Groups logs into fixed hourly windows using extracted timestamps (e.g., `2026-Jan-08_08:00`).
-  - **Config**: `chunk_size = 3000`, `overlap = 0`, hourly granularity.
-  - **Pros**: Ideal for temporal/traffic pattern analysis and peak‑hour identification.
-  - **Cons**: May split related requests across hour boundaries; less suited for user‑centric queries.
+**Best for**: RAG systems requiring high-quality semantic search and accurate context retrieval for complex queries.
 
-- **Method 4 – `log_component_based`**
+- **Logic**: Context-aware smart splitting using intelligent boundaries:
+  - Never splits IP session patterns (consecutive requests from same IP)
+  - Never splits error sequences (errors + immediate context)
+  - Respects natural log boundaries (time gaps, URL pattern changes)
+  - Maintains semantic overlap
+  - Optimizes chunk size for embedding models
+- **Boundary Detection**:
+  - Time gap > 60 seconds = natural boundary
+  - IP change after 5+ consecutive requests = session boundary
+  - Error sequences kept intact (error + 2 before + 2 after)
+  - URL pattern shifts = activity boundary
+- **Config**: `chunk_size = 100` (configurable), `overlap_size = 15` (configurable)
+- **Metadata**: Includes chunk_index, entries, unique_ips, error_count, boundary_reasons, has_overlap
+- **Pros**: High-quality semantic chunks, protects error context, respects natural boundaries
+- **Cons**: Requires parsing all lines first, more memory intensive
 
-  - **Logic**: Groups logs by client IP address using regex on the line start.
-  - **Config**: `chunk_size = 2500`, `overlap = 0`, component identifier = IP.
-  - **Pros**: Great for client/user behavior analysis, session tracking, and suspicious activity detection.
-  - **Cons**: Fragments time‑based patterns; multi‑IP queries require multiple chunks.
+#### Method 3 – `log_semantic_sliding`
 
-- **Method 5 – `log_status_code`**
-  - **Logic**: Groups logs by HTTP status code categories (2xx success, 3xx redirect, 4xx client error, 5xx server error).
-  - **Config**: `chunk_size = 2500`, `overlap = 0`.
-  - **Pros**: Excellent for performance monitoring and error‑rate analysis.
-  - **Cons**: Fragments user journeys and limits context to same‑status entries.
+**Best for**: RAG applications where context between chunks matters, general-purpose log analysis.
+
+- **Logic**: Sliding window over sequential log entries with configurable overlap to preserve context across chunk boundaries.
+- **Config**: `chunk_size = 100` (configurable), `overlap_size = 20` (configurable, percentage-based)
+- **Metadata**: Includes chunk_index, entries count, has_overlap flag
+- **Pros**: Strong temporal/context preservation, good for multi-entry analysis and general RAG queries
+- **Cons**: Slight storage overhead due to overlap, may mix unrelated entries for very focused queries
+
+#### Method 4 – `log_error_block`
+
+**Best for**: Error analysis, debugging, security incident investigation, authentication failure patterns.
+
+- **Logic**: Detects error status codes (400, 401, 403, 404, 405, 500, 501, 502, 503, 504) and groups them with nearby non-error context into blocks. Chunks are created when size threshold is reached OR when errors are followed by non-error lines.
+- **Config**: `chunk_size = 100` (configurable), `overlap = 0`
+- **Metadata**: Includes error_lines count, total_lines count
+- **Pros**: Excellent for error analysis, debugging, and security incident investigation
+- **Cons**: Less effective for non-error queries; can fragment successful traffic patterns
+
+#### Method 5 – `log_time_window`
+
+**Best for**: Temporal/traffic pattern analysis, peak-hour identification, time-series queries.
+
+- **Logic**: Groups logs into fixed hourly windows using extracted timestamps (e.g., `2026-Jan-08_08:00`). Detects timestamp patterns like `[23/Jan/2019:03:56:14 +0330]` and groups by hour.
+- **Config**: `chunk_size = 100` (configurable), `overlap = 0`, hourly granularity
+- **Metadata**: Includes time_window identifier, entries count
+- **Pros**: Ideal for temporal/traffic pattern analysis and peak-hour identification
+- **Cons**: May split related requests across hour boundaries; less suited for user-centric queries
+
+#### Method 6 – `log_component_based`
+
+**Best for**: Client/user behavior analysis, session tracking, suspicious activity detection, user journey analysis.
+
+- **Logic**: Groups logs by client IP address using regex pattern matching at the start of log lines. Chunks are created on size threshold OR when IP address changes.
+- **Config**: `chunk_size = 100` (configurable), `overlap = 0`, component identifier = IP
+- **Metadata**: Includes component (IP address), entries count
+- **Pros**: Great for client/user behavior analysis, session tracking, and suspicious activity detection
+- **Cons**: Fragments time-based patterns; multi-IP queries require multiple chunks
+
+#### Method 7 – `log_status_code`
+
+**Best for**: Performance monitoring, error-rate analysis, status-code-focused analytics.
+
+- **Logic**: Groups logs by HTTP status code categories:
+  - `2xx_success` - Successful requests
+  - `3xx_redirect` - Redirect responses
+  - `4xx_client_error` - Client-side errors
+  - `5xx_server_error` - Server-side errors
+- **Config**: `chunk_size = 100` (configurable), `overlap = 0`
+- **Metadata**: Includes status_category, entries count
+- **Pros**: Excellent for performance monitoring and error-rate analysis
+- **Cons**: Fragments user journeys and limits context to same-status entries
 
 ### Question–Answer Evaluation (Summary)
 
@@ -232,14 +399,18 @@ The methods were evaluated on multiple query types, including user journey analy
 ### Recommendations
 
 - **Best general‑purpose method**:
-  - `log_semantic_sliding` is recommended for default RAG usage due to strong context preservation, balanced performance across all query types (7.0/10), and design optimized for retrieval‑augmented generation.
-- **Best for specialized tasks**:
-  - `log_error_block` – error analysis, security incidents, and authentication failures.
-  - `log_time_window` – temporal/traffic pattern queries.
-  - `log_component_based` – user journey, cart operations, and IP‑based behavior analysis.
-  - `log_status_code` – performance monitoring and status‑code‑focused analytics.
 
-This evaluation demonstrates that **no single chunking method is optimal for all query types**, and the system can select or combine strategies depending on the question type for more accurate log analysis.
+  - **`log_hybrid_adaptive`** ⭐ (Default) - Recommended for default RAG usage due to intelligent combination of multiple strategies, balanced performance across all query types, and design optimized for retrieval‑augmented generation. It adaptively combines time-window, error-block, component, and semantic sliding strategies.
+  - `log_semantic_sliding` - Alternative default choice with strong context preservation and balanced performance (7.0/10).
+  - `log_hybrid_intelligent` - For high-quality semantic search requiring context-aware splitting and natural boundary detection.
+
+- **Best for specialized tasks**:
+  - `log_error_block` – Error analysis, security incidents, and authentication failures.
+  - `log_time_window` – Temporal/traffic pattern queries, peak-hour identification.
+  - `log_component_based` – User journey, cart operations, and IP‑based behavior analysis.
+  - `log_status_code` – Performance monitoring and status‑code‑focused analytics.
+
+This evaluation demonstrates that **no single chunking method is optimal for all query types**, and the system can select or combine strategies depending on the question type for more accurate log analysis. The hybrid methods (`log_hybrid_adaptive` and `log_hybrid_intelligent`) provide the best balance by intelligently combining multiple strategies.
 
 ---
 

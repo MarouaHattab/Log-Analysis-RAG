@@ -35,7 +35,7 @@ echo "=================================="
 
 # Rebuild and start everything
 docker compose up -d --build
-
+docker compose up --build
 echo ""
 echo "✅ Services are starting!"
 echo ""
