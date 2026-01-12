@@ -954,6 +954,17 @@
       const apiBase = window.API_BASE_URL || "http://4.232.170.195/";
       const wsBase = window.WS_BASE_URL || "ws://4.232.170.195/";
 
+      // Helper function to build API URLs (handles proxy when needed)
+      const getApiUrl = (path) => {
+        if (window.buildApiUrl) {
+          return window.buildApiUrl(path);
+        }
+        // Fallback: direct URL construction
+        const base = apiBase.endsWith("/") ? apiBase : apiBase + "/";
+        const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+        return base + cleanPath;
+      };
+
       let chunkingMethodDescriptions = {
         log_hybrid_adaptive:
           "Combines time, error, and component analysis - Best for general log analysis",
