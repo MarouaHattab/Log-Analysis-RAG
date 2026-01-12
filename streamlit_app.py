@@ -283,6 +283,10 @@ with st.sidebar:
 # Main content tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["📤 Upload & Process", "ℹ️ Index Info", "📊 Dashboard", "🔍 Search Logs", "🤖 AI Assistant"])
 
+# Track which tab should be active
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = 0
+
 with tab1:
     st.header("Upload & Process Log Files")
     
@@ -636,63 +640,62 @@ with tab5:
                 st.rerun()
     
     st.markdown("---")
+
+# Chat input MUST be outside tabs
+user_query = st.chat_input("Ask about your logs... (e.g., 'What are the most common errors?')")
+
+if user_query or 'suggested_query' in st.session_state:
+    query = user_query if user_query else st.session_state.get('suggested_query', '')
+    if 'suggested_query' in st.session_state:
+        del st.session_state.suggested_query
     
-    # Chat input
-    user_query = st.chat_input("Ask about your logs... (e.g., 'What are the most common errors?')")
-    
-    if user_query or 'suggested_query' in st.session_state:
-        query = user_query if user_query else st.session_state.get('suggested_query', '')
-        if 'suggested_query' in st.session_state:
-            del st.session_state.suggested_query
+    if not project_id:
+        st.error("⚠️ Please enter a Project ID in the sidebar first")
+    elif st.session_state.is_processing:
+        st.warning("⏳ Please wait - processing is still in progress. You can ask questions once the processing is complete.")
+    else:
+        # Add user message to chat
+        st.session_state.chat_history.append({"role": "user", "content": query})
         
-        if not project_id:
-            st.error("⚠️ Please enter a Project ID in the sidebar first")
-        elif st.session_state.is_processing:
-            st.warning("⏳ Please wait - processing is still in progress. You can ask questions once the processing is complete.")
-        else:
-            # Add user message to chat
-            st.session_state.chat_history.append({"role": "user", "content": query})
-            
-            # Show thinking indicator
-            with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("Analyzing logs..."):
-                    try:
-                        # Filter chat history before sending (remove system messages)
-                        clean_history = filter_chat_history(st.session_state.chat_history[:-1])
-                        
-                        payload = {
-                            "text": query,
-                            "limit": 6,
-                            "chat_history": clean_history
-                        }
-                        response = make_request("POST", f"api/v1/nlp/index/answer/{project_id}", json=payload)
-                        
-                        if response and response.status_code == 200:
-                            data = response.json()
-                            raw_answer = data.get("answer", "I apologize, but I couldn't generate an answer.")
-                            
-                            # Clean the answer to remove system prompts
-                            cleaned_answer = clean_answer_text(raw_answer)
-                            
-                            if cleaned_answer:
-                                st.session_state.chat_history.append({"role": "assistant", "content": cleaned_answer})
-                            else:
-                                st.session_state.chat_history.append({"role": "assistant", "content": "I apologize, but I couldn't generate a proper answer. Please try rephrasing your question."})
-                            
-                            # Update chat history from API response if available
-                            api_history = data.get("chat_history", [])
-                            if api_history:
-                                # Filter and clean API history
-                                filtered_api_history = filter_chat_history(api_history)
-                                # Only update if we have valid history
-                                if filtered_api_history:
-                                    st.session_state.chat_history = filtered_api_history
-                            
-                            st.rerun()
-                        else:
-                            error_msg = response.json().get("detail", "Failed to get answer") if response else "Connection error"
-                            st.session_state.chat_history.append({"role": "assistant", "content": f"❌ I apologize, but I encountered an error: {error_msg}"})
-                            st.rerun()
-                    except Exception as e:
-                        st.session_state.chat_history.append({"role": "assistant", "content": f"❌ Connection error: {str(e)}. Please check your API connection."})
-                        st.rerun()
+        # Show thinking indicator - Create a placeholder in tab5
+        with st.spinner("Analyzing logs..."):
+            try:
+                # Filter chat history before sending (remove system messages)
+                clean_history = filter_chat_history(st.session_state.chat_history[:-1])
+                
+                payload = {
+                    "text": query,
+                    "limit": 6,
+                    "chat_history": clean_history
+                }
+                response = make_request("POST", f"api/v1/nlp/index/answer/{project_id}", json=payload)
+                
+                if response and response.status_code == 200:
+                    data = response.json()
+                    raw_answer = data.get("answer", "I apologize, but I couldn't generate an answer.")
+                    
+                    # Clean the answer to remove system prompts
+                    cleaned_answer = clean_answer_text(raw_answer)
+                    
+                    if cleaned_answer:
+                        st.session_state.chat_history.append({"role": "assistant", "content": cleaned_answer})
+                    else:
+                        st.session_state.chat_history.append({"role": "assistant", "content": "I apologize, but I couldn't generate a proper answer. Please try rephrasing your question."})
+                    
+                    # Update chat history from API response if available
+                    api_history = data.get("chat_history", [])
+                    if api_history:
+                        # Filter and clean API history
+                        filtered_api_history = filter_chat_history(api_history)
+                        # Only update if we have valid history
+                        if filtered_api_history:
+                            st.session_state.chat_history = filtered_api_history
+                    
+                    st.rerun()
+                else:
+                    error_msg = response.json().get("detail", "Failed to get answer") if response else "Connection error"
+                    st.session_state.chat_history.append({"role": "assistant", "content": f"❌ I apologize, but I encountered an error: {error_msg}"})
+                    st.rerun()
+            except Exception as e:
+                st.session_state.chat_history.append({"role": "assistant", "content": f"❌ Connection error: {str(e)}. Please check your API connection."})
+                st.rerun()
