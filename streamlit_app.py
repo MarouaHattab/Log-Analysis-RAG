@@ -71,6 +71,39 @@ st.markdown("""
         border: 1px solid #93c5fd;
         margin: 1rem 0;
     }
+    .chat-container {
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .welcome-card {
+        background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(147, 51, 234, 0.2);
+    }
+    .suggestion-chip {
+        background: #f3e8ff;
+        border: 1px solid #c4b5fd;
+        color: #7c3aed;
+        padding: 0.5rem 1rem;
+        border-radius: 1.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .suggestion-chip:hover {
+        background: #e9d5ff;
+        border-color: #9333ea;
+    }
+    .stChatMessage {
+        padding: 1rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,6 +132,119 @@ CHUNKING_METHODS = {
     "log_component_based": "Component Based - Group by IP/source",
     "log_semantic_sliding": "Semantic Sliding - Context window with overlap"
 }
+
+def clean_answer_text(text):
+    """Remove system prompts and unwanted formatting from answer text"""
+    if not text:
+        return text
+    
+    # Convert to string if not already
+    text = str(text)
+    
+    # Remove system prompt patterns
+    lines = text.split('\n')
+    cleaned_lines = []
+    skip_until_answer = False
+    found_answer_start = False
+    
+    # Keywords that indicate system prompts
+    system_keywords = [
+        'ANTI-HALLUCINATION',
+        'CONVERSATION CONTEXT',
+        'RESPONSE STYLE',
+        'LOG TERMINOLOGY',
+        'EXAMPLE GOOD RESPONSE',
+        'USER QUESTION',
+        'INSTRUCTIONS FOR YOUR RESPONSE',
+        'YOUR RESPONSE:',
+        'You are an expert log analysis AI assistant'
+    ]
+    
+    # Separator pattern
+    separator = '═══════════════════════════════════════════════════════════════'
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        
+        # Check if this line contains system prompt indicators
+        is_system_line = any(keyword in line for keyword in system_keywords)
+        
+        # Check if this is a separator line
+        is_separator = separator in line
+        
+        # If we find a separator with system keywords nearby, skip until answer
+        if is_separator:
+            # Check surrounding lines for system keywords
+            context_lines = ' '.join(lines[max(0, i-2):min(len(lines), i+3)])
+            if any(keyword in context_lines for keyword in system_keywords):
+                skip_until_answer = True
+                continue
+        
+        # Skip system prompt lines
+        if is_system_line or is_separator:
+            skip_until_answer = True
+            continue
+        
+        # Look for answer markers
+        if skip_until_answer:
+            answer_markers = ['**Answer:**', '**YOUR RESPONSE:**', 'Answer:', 'Answer :']
+            found_marker = False
+            
+            for marker in answer_markers:
+                if marker in line:
+                    skip_until_answer = False
+                    found_answer_start = True
+                    # Extract content after marker
+                    content = line.split(marker, 1)[-1].strip()
+                    if content:
+                        cleaned_lines.append(content)
+                    found_marker = True
+                    break
+            
+            if not found_marker:
+                # Check if we've moved past system prompts (non-empty line that's not a separator)
+                if line_stripped and not is_separator and i > 5:
+                    # Assume we're past system prompts if we see actual content
+                    skip_until_answer = False
+                    found_answer_start = True
+                    cleaned_lines.append(line)
+            continue
+        
+        # Keep the line if we're past system prompts
+        cleaned_lines.append(line)
+    
+    cleaned_text = '\n'.join(cleaned_lines).strip()
+    
+    # Remove any remaining prompt artifacts
+    if cleaned_text.startswith('Answer:'):
+        cleaned_text = cleaned_text.replace('Answer:', '', 1).strip()
+    if cleaned_text.startswith('**Answer:**'):
+        cleaned_text = cleaned_text.replace('**Answer:**', '', 1).strip()
+    
+    # Remove separator lines
+    cleaned_text = cleaned_text.replace(separator, '').strip()
+    
+    # Remove multiple consecutive empty lines
+    while '\n\n\n' in cleaned_text:
+        cleaned_text = cleaned_text.replace('\n\n\n', '\n\n')
+    
+    return cleaned_text.strip()
+
+def filter_chat_history(chat_history):
+    """Filter out system messages from chat history"""
+    filtered = []
+    for msg in chat_history:
+        # Only keep user and assistant messages, skip system messages
+        if msg.get("role") in ["user", "assistant"]:
+            # Clean assistant messages
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "")
+                cleaned_content = clean_answer_text(content)
+                if cleaned_content:  # Only add if there's actual content
+                    filtered.append({"role": "assistant", "content": cleaned_content})
+            else:
+                filtered.append(msg)
+    return filtered
 
 def make_request(method, endpoint, **kwargs):
     """Helper function to make API requests"""
@@ -424,35 +570,56 @@ with tab4:
                     st.error(f"❌ Error: {str(e)}")
 
 with tab5:
-    st.header("🤖 AI Assistant")
-    st.markdown("Ask questions about your logs using AI-powered RAG")
+    # Header with clear button
+    col_header, col_clear = st.columns([4, 1])
+    with col_header:
+        st.header("🤖 AI Assistant")
+        st.markdown("Ask questions about your logs using AI-powered RAG")
+    with col_clear:
+        st.write("")  # Spacing
+        if st.button("🗑️ Clear Chat", use_container_width=True):
+            st.session_state.chat_history = []
+            st.rerun()
     
-    # Chat history display
-    chat_container = st.container()
-    with chat_container:
-        if not st.session_state.chat_history:
-            st.info("""
-            👋 Hello! I'm your intelligent log analysis assistant. I'm here to help you uncover insights from your data.
-            
-            **I can help you:**
-            - ✅ Find specific errors or patterns
-            - ✅ Analyze error frequencies and trends
-            - ✅ Identify root causes of issues
-            
-            Upload and process your logs first to get started.
-            """)
-        else:
-            for msg in st.session_state.chat_history:
-                if msg["role"] == "user":
-                    with st.chat_message("user"):
-                        st.write(msg["content"])
-                else:
-                    with st.chat_message("assistant"):
-                        st.write(msg["content"])
+    # Filter and display chat history
+    filtered_history = filter_chat_history(st.session_state.chat_history)
+    
+    # Chat messages container
+    if not filtered_history:
+        # Welcome message
+        st.markdown("""
+        <div class="welcome-card">
+            <h3 style="margin-top: 0; color: white;">👋 Welcome to Log Analysis AI Assistant</h3>
+            <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem;">
+                I'm your intelligent log analysis assistant. I can help you understand your log data by providing clear, detailed, and accurate analysis.
+            </p>
+            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 0.5rem;">
+                <p style="margin: 0; font-weight: 600; color: white; margin-bottom: 0.5rem;">I can help you:</p>
+                <ul style="margin: 0; padding-left: 1.5rem; color: rgba(255,255,255,0.95);">
+                    <li>Find specific errors or patterns</li>
+                    <li>Analyze error frequencies and trends</li>
+                    <li>Identify root causes of issues</li>
+                    <li>Understand log entries and their meaning</li>
+                </ul>
+            </div>
+            <p style="color: rgba(255,255,255,0.8); margin-top: 1rem; margin-bottom: 0; font-size: 0.9rem;">
+                💡 <strong>Tip:</strong> Upload and process your logs first to get started.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Display chat messages
+        for msg in filtered_history:
+            if msg["role"] == "user":
+                with st.chat_message("user", avatar="👤"):
+                    st.write(msg["content"])
+            else:
+                with st.chat_message("assistant", avatar="🤖"):
+                    # Render markdown for better formatting
+                    st.markdown(msg["content"])
     
     # Suggested questions
-    st.markdown("**Suggested Questions:**")
-    col_sug1, col_sug2, col_sug3, col_sug4 = st.columns(4)
+    st.markdown("### 💡 Suggested Questions")
     suggestions = [
         "What are the most frequent errors?",
         "Analyze the error trends over time",
@@ -460,10 +627,15 @@ with tab5:
         "Summary of the last hour activity"
     ]
     
-    for col, suggestion in zip([col_sug1, col_sug2, col_sug3, col_sug4], suggestions):
+    # Display suggestions as chips
+    cols = st.columns(4)
+    for col, suggestion in zip(cols, suggestions):
         with col:
-            if st.button(suggestion[:30] + "...", key=f"sug_{suggestion}"):
+            if st.button(f"💬 {suggestion}", key=f"sug_{suggestion}", use_container_width=True):
                 st.session_state.suggested_query = suggestion
+                st.rerun()
+    
+    st.markdown("---")
     
     # Chat input
     user_query = st.chat_input("Ask about your logs... (e.g., 'What are the most common errors?')")
@@ -474,32 +646,53 @@ with tab5:
             del st.session_state.suggested_query
         
         if not project_id:
-            st.error("Please enter a Project ID first")
+            st.error("⚠️ Please enter a Project ID in the sidebar first")
         elif st.session_state.is_processing:
-            st.warning("Please wait - processing is still in progress. You can ask questions once the processing is complete.")
+            st.warning("⏳ Please wait - processing is still in progress. You can ask questions once the processing is complete.")
         else:
             # Add user message to chat
             st.session_state.chat_history.append({"role": "user", "content": query})
             
-            with st.spinner("Thinking..."):
-                try:
-                    payload = {
-                        "text": query,
-                        "limit": 6,
-                        "chat_history": st.session_state.chat_history[:-1]  # Exclude current message
-                    }
-                    response = make_request("POST", f"api/v1/nlp/index/answer/{project_id}", json=payload)
-                    
-                    if response and response.status_code == 200:
-                        data = response.json()
-                        answer = data.get("answer", "I apologize, but I couldn't generate an answer.")
-                        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-                        st.session_state.chat_history = data.get("chat_history", st.session_state.chat_history)
+            # Show thinking indicator
+            with st.chat_message("assistant", avatar="🤖"):
+                with st.spinner("Analyzing logs..."):
+                    try:
+                        # Filter chat history before sending (remove system messages)
+                        clean_history = filter_chat_history(st.session_state.chat_history[:-1])
+                        
+                        payload = {
+                            "text": query,
+                            "limit": 6,
+                            "chat_history": clean_history
+                        }
+                        response = make_request("POST", f"api/v1/nlp/index/answer/{project_id}", json=payload)
+                        
+                        if response and response.status_code == 200:
+                            data = response.json()
+                            raw_answer = data.get("answer", "I apologize, but I couldn't generate an answer.")
+                            
+                            # Clean the answer to remove system prompts
+                            cleaned_answer = clean_answer_text(raw_answer)
+                            
+                            if cleaned_answer:
+                                st.session_state.chat_history.append({"role": "assistant", "content": cleaned_answer})
+                            else:
+                                st.session_state.chat_history.append({"role": "assistant", "content": "I apologize, but I couldn't generate a proper answer. Please try rephrasing your question."})
+                            
+                            # Update chat history from API response if available
+                            api_history = data.get("chat_history", [])
+                            if api_history:
+                                # Filter and clean API history
+                                filtered_api_history = filter_chat_history(api_history)
+                                # Only update if we have valid history
+                                if filtered_api_history:
+                                    st.session_state.chat_history = filtered_api_history
+                            
+                            st.rerun()
+                        else:
+                            error_msg = response.json().get("detail", "Failed to get answer") if response else "Connection error"
+                            st.session_state.chat_history.append({"role": "assistant", "content": f"❌ I apologize, but I encountered an error: {error_msg}"})
+                            st.rerun()
+                    except Exception as e:
+                        st.session_state.chat_history.append({"role": "assistant", "content": f"❌ Connection error: {str(e)}. Please check your API connection."})
                         st.rerun()
-                    else:
-                        error_msg = response.json().get("detail", "Failed to get answer") if response else "Connection error"
-                        st.session_state.chat_history.append({"role": "assistant", "content": f"I apologize, but I encountered an error: {error_msg}"})
-                        st.rerun()
-                except Exception as e:
-                    st.session_state.chat_history.append({"role": "assistant", "content": f"Connection error: {str(e)}"})
-                    st.rerun()
