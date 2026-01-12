@@ -10,6 +10,9 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- API Proxy Configuration - Set this if deploying to HTTPS (GitHub Pages/Vercel) -->
+    <!-- Uncomment and set your proxy URL if you have one deployed -->
+    <!-- <script>window.API_PROXY_URL = "https://your-proxy.vercel.app/api/proxy";</script> -->
     <!-- API Configuration - Load before main script -->
     <script src="config.js"></script>
     <style>
@@ -1110,7 +1113,7 @@
         if (!id) return;
 
         try {
-          const res = await fetch(`${apiBase}api/v1/nlp/index/info/${id}`);
+          const res = await fetch(getApiUrl(`api/v1/nlp/index/info/${id}`));
           if (res.ok) {
             updateWebSocketStatus(true, "Ready");
           } else {
@@ -1123,7 +1126,7 @@
 
       async function loadChunkingMethods() {
         try {
-          const res = await fetch(`${apiBase}api/v1/data/chunking-methods`);
+          const res = await fetch(getApiUrl(`api/v1/data/chunking-methods`));
           if (res.ok) {
             const data = await res.json();
             chunkingMethodDescriptions = data.descriptions;
@@ -1460,7 +1463,7 @@
         try {
           const formData = new FormData();
           formData.append("file", fileInput.files[0]);
-          const res = await fetch(`${apiBase}api/v1/data/upload/${id}`, {
+          const res = await fetch(getApiUrl(`api/v1/data/upload/${id}`), {
             method: "POST",
             body: formData,
           });
@@ -1539,7 +1542,7 @@
           };
 
           const res = await fetch(
-            `${apiBase}api/v1/data/process-and-push/${id}`,
+            getApiUrl(`api/v1/data/process-and-push/${id}`),
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1620,7 +1623,7 @@
         pollingInterval = setInterval(async () => {
           try {
             const res = await fetch(
-              `${apiBase}api/v1/data/workflow-progress/${workflowId}`
+              getApiUrl(`api/v1/data/workflow-progress/${workflowId}`)
             );
 
             if (res.ok) {
@@ -1649,7 +1652,7 @@
           '<div class="text-sm text-gray-500">Loading index information...</div>';
 
         try {
-          const res = await fetch(`${apiBase}api/v1/nlp/index/info/${id}`);
+          const res = await fetch(getApiUrl(`api/v1/nlp/index/info/${id}`));
           const data = await res.json();
           if (res.ok && data.collection_info) {
             const table = data.collection_info.table_info;
@@ -1708,7 +1711,7 @@
           '<div class="text-sm text-gray-600 flex items-center gap-2"><div class="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>Searching logs...</div>';
 
         try {
-          const res = await fetch(`${apiBase}api/v1/nlp/index/search/${id}`, {
+          const res = await fetch(getApiUrl(`api/v1/nlp/index/search/${id}`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1861,7 +1864,7 @@
         chatArea.scrollTop = chatArea.scrollHeight;
 
         try {
-          const res = await fetch(`${apiBase}api/v1/nlp/index/answer/${id}`, {
+          const res = await fetch(getApiUrl(`api/v1/nlp/index/answer/${id}`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -2108,7 +2111,7 @@
           return;
         }
 
-        const fetchUrl = `${apiBase}api/v1/data/eda/${projectId}/${fileId}`;
+        const fetchUrl = getApiUrl(`api/v1/data/eda/${projectId}/${fileId}`);
         console.log("Fetching dashboard data from:", fetchUrl);
 
         // Switch to dashboard immediately to show activity
