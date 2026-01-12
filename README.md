@@ -150,25 +150,40 @@ graph TB
     class Flower,Prometheus,Grafana monitorStyle
 ```
 
-- **FastAPI + Nginx + Monitoring**  
+
+- **Monitoring with Prometheus & Grafana**  
+
+  ![Grafana Dashboard](img/grafana-dashboard.png)
+
   ![FastAPI & Monitoring](img/grafana-fastapi.png)
+
+  ![Postgres SQL & Monitoring](img/postgres-grafna.png)
+
+  ![Node Exporter & Monitoring](img/nodexporter-grafana.png)
+
+  ![Qdrant & Monitoring](img/qdrant-grafana.png)
 
 - **Dockerized infrastructure**  
   ![Dockerized Stack](img/docker.png)
 
 - **Database schema & assets**  
   ![Project Database](img/project-db.png)  
+
   ![Database Assets](img/db_assets.png)  
+
+  ![Database Data Chunks](img/data_chunksdb.png) 
+
+  ![ Database Celery Task Execution](img/celery_task_execution.png)  
+
   ![Database Relationships](img/db_relationship.png)
 
-- **Vector database observability**  
-  ![Qdrant Metrics](img/qdrant-grafana.png)
 
 - **Celery & Flower monitoring**  
-  ![Flower Dashboard](img/monitoring-using-flower.png)  
+  ![Flower Dashboard](img/monitoring-using-flower.png) 
+
   ![Flower Detailed View](img/monitoring-using-flower2.png)  
-  ![Celery Task Execution](img/celery_task_execution.png)  
-  ![Celery Task Execution DB](img/celery_task_executiondb.png)
+
+
 
 - **RabbitMQ management**  
   ![RabbitMQ Management](img/RabbitMQ-message-broker.png)
@@ -193,8 +208,9 @@ Retrieval Augmented Generation implementation for **log file question answering 
 ### LLM & AI
 
 - **Ollama**
-  - **`nomic-embed-text:latest`** – text embeddings generation
-  - **`qwen2.5-coder:1.5b`** – large language model for answer generation
+  - **`nomic-embed-text:latest`** – text embeddings generation (local deployment & azure deployment)
+  - **`qwen2.5-coder:7b`** – large language model for answer generation(local deployment)
+   - **`qwen2.5-coder:1.5b`** – large language model for answer generation( azure deployment)
 
 ### Vector & Databases
 
@@ -236,7 +252,12 @@ Retrieval Augmented Generation implementation for **log file question answering 
 
 - **Postman** – API testing
 - **Git & GitHub** – version control
-
+## Deployment Options
+- **Azure Deployment** – using Azure for deploying service publically with Ollama cloud-hosted models
+- **Vercel Deployment** – using Vercel for deploying frontend with Ollama cloud-hosted models
+  **Streamlit Cloud for Deployment** – using Streamlit Cloud for deploying frontend with Ollama cloud-hosted models
+  **Github Pages for Deployment** – using Github pages for deploying frontend with Ollama cloud-hosted models
+  **Github Actions for Deployment** – using Github actions for ci/cd with Ollama cloud-hosted models
 ## Component Responsibilities
 
 - **FastAPI**: Main entry point of the system. Handles user requests, file uploads, and search queries, and orchestrates communication with backend services.
@@ -246,7 +267,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Celery Beat**: Handles scheduled and periodic tasks such as cleanup jobs or recurring background processes.
 - **Vector Databases (Qdrant / pgvector)**: Store and index embeddings generated from log chunks, enabling fast and accurate similarity search during retrieval.
 - **Ollama – `nomic-embed-text:latest`**: Generates dense vector embeddings from text chunks, forming the foundation of semantic search.
-- **Ollama – `qwen2.5-coder:1.5b`**: Generates context‑aware responses based on the most relevant retrieved chunks.
+- **Ollama – `qwen2.5-coder:7b`**: Generates context‑aware responses based on the most relevant retrieved chunks.
 - **PostgreSQL**: Stores structured application data including metadata, project information, and task execution details.
 - **SQLAlchemy & Alembic**: Provide ORM capabilities and database schema migrations to manage PostgreSQL efficiently.
 - **Nginx**: Acts as a reverse proxy in front of the FastAPI application, improving security, routing, and performance.
@@ -261,7 +282,7 @@ Retrieval Augmented Generation implementation for **log file question answering 
 - **Postman**: Used for API testing and endpoint validation during development.
 - **Git & GitHub**: Version control and source code management.
 
-## Log Chunking Methods Evaluation (January 9, 2026)
+## Log Chunking Methods Evaluation 
 
 This system includes multiple log‑specific chunking strategies for RAG, evaluated on a dataset of 150+ Apache web server log entries over a 65‑minute period (08:15:23–09:20:05, January 8, 2026). The dataset covers multiple IPs, HTTP methods (GET, POST, PUT, DELETE), and status codes (200, 304, 401, 403, 404) across static assets, APIs, product pages, admin, search, cart, and checkout flows.
 
