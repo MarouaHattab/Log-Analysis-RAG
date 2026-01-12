@@ -945,17 +945,8 @@
 
     <script>
       // API Configuration - can be overridden by environment variables or config
-      // Use HTTPS for GitHub Pages compatibility (prevents mixed content errors)
-      // If your server doesn't support HTTPS, change to: "http://4.232.170.195/"
-      const apiBase =
-        window.location.protocol === "https:"
-          ? "https://4.232.170.195/"
-          : "http://4.232.170.195/";
-      const wsBase =
-        window.WS_BASE_URL ||
-        (window.location.protocol === "https:"
-          ? "wss://4.232.170.195/"
-          : "ws://4.232.170.195/");
+      const apiBase = "http://4.232.170.195/";
+      const wsBase = window.WS_BASE_URL || "ws://4.232.170.195/";
 
       let chunkingMethodDescriptions = {
         log_hybrid_adaptive:

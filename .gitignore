@@ -2,3 +2,6 @@
 .env
 .vscode/
 .deploy.sh
+QUICK_START_STREAMLIT.md
+STREAMLIT_DEPLOYMENT.md
+STREAMLIT_SUMMARY.md
